@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/notesFragment">
+    <fragment
+        android:id="@+id/notesFragment"
+        android:name="dev.suli4.note.presentation.notes.NotesFragment"
+        android:label="NotesFragment" >
+        <action
+            android:id="@+id/action_notesFragment_to_createNoteFragment"
+            app:destination="@id/createNoteFragment"
+            app:launchSingleTop="false"
+            app:popUpToInclusive="false" />
+    </fragment>
+    <fragment
+        android:id="@+id/createNoteFragment"
+        android:name="dev.suli4.note.presentation.create_note.CreateNoteFragment"
+        android:label="CreateNoteFragment" >
+        <action
+            android:id="@+id/action_createNoteFragment_to_notesFragment"
+            app:destination="@id/notesFragment"
+            app:launchSingleTop="true"
+            app:popUpTo="@id/nav_graph" />
+        <argument
+            android:name="note"
+            app:argType="dev.suli4.note.model.NoteModel"
+            app:nullable="true"
+            android:defaultValue="@null" />
+        <argument
+            android:name="position"
+            app:argType="integer"
+            android:defaultValue="0" />
+    </fragment>
+</navigation>
