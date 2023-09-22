@@ -3,7 +3,6 @@ package dev.suli4.note.presentation.notes
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
-import android.util.LayoutDirection
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -13,6 +12,7 @@ import android.view.ViewGroup
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.core.view.get
+import androidx.datastore.preferences.core.edit
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.clearFragmentResult
 import androidx.fragment.app.setFragmentResultListener
@@ -24,20 +24,21 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.google.android.flexbox.AlignItems
-import com.google.android.flexbox.FlexWrap
-import com.google.android.flexbox.FlexboxLayoutManager
-import com.google.android.flexbox.JustifyContent
 import dagger.hilt.android.AndroidEntryPoint
 import dev.suli4.note.R
 import dev.suli4.note.databinding.FragmentNotesBinding
+import dev.suli4.note.ext.PreferencesKeys
+import dev.suli4.note.ext.dataStore
 import dev.suli4.note.ext.getDrawable
 import dev.suli4.note.model.NoteModel
 import dev.suli4.note.presentation.notes.adapter.NoteAdapter
 import dev.suli4.note.presentation.notes.adapter.NoteClickListener
 import dev.suli4.note.viewmodel.NoteViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 
@@ -52,18 +53,23 @@ class NotesFragment : Fragment() {
         const val REQUEST_KEY_EDIT_NOTE = "edit_note"
         const val NOTE_KEY = "note"
         const val NOTE_POSITION = "position"
+
+        const val GRID_VIEW = false
     }
 
     private val viewModel: NoteViewModel by viewModels()
     private lateinit var adapter: NoteAdapter
 
-    private val viewTypeState: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val viewTypeState: MutableStateFlow<Boolean> = MutableStateFlow(GRID_VIEW)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        adapter = NoteAdapter(viewTypeState.value)
-        adapter.setNoteListener(noteClickListener)
+        lifecycleScope.launch(Dispatchers.IO) {
+            viewTypeState.value = context?.dataStore!!.data.map { preferences ->
+                preferences[PreferencesKeys.ViewTypeSettings]
+            }.first() ?: GRID_VIEW
+        }
     }
 
     override fun onCreateView(
@@ -87,6 +93,9 @@ class NotesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        adapter = NoteAdapter(viewTypeState.value)
+        adapter.setNoteListener(noteClickListener)
+
         val menuHost: MenuHost = requireActivity()
 
         menuHost.addMenuProvider(object : MenuProvider {
@@ -99,6 +108,9 @@ class NotesFragment : Fragment() {
                 when (menuItem.itemId) {
                     R.id.viewType -> {
                         viewTypeState.value = !viewTypeState.value
+                        lifecycleScope.launch {
+                            updateView(viewTypeState.value)
+                        }
                         menuItem.icon = getIconViewType()
                         binding.rvNotes.layoutManager = getLayoutManager()
                     }
@@ -107,7 +119,6 @@ class NotesFragment : Fragment() {
             }
 
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-
 
         binding.apply {
             rvNotes.adapter = adapter
@@ -149,12 +160,16 @@ class NotesFragment : Fragment() {
                             adapter.setNotes(state.notes)
                         }
 
-                        is NoteViewModel.NotesState.Loading -> {
-
-                        }
+                        is NoteViewModel.NotesState.Loading -> {}
                     }
                 }
             }
+        }
+    }
+
+    suspend fun updateView(type: Boolean) {
+        context?.dataStore?.edit { settings ->
+            settings[PreferencesKeys.ViewTypeSettings] = type
         }
     }
 
@@ -176,19 +191,12 @@ class NotesFragment : Fragment() {
     }
 
     private fun getIconViewType(): Drawable? {
+        // if current type is GRID then icon to list type
         if (!viewTypeState.value) return getDrawable(R.drawable.baseline_view_list_24)
 
         return getDrawable(
             R.drawable.baseline_grid_view_24
         )
-    }
-
-    private fun getFlexBoxLayoutManager(): FlexboxLayoutManager {
-        val lm = FlexboxLayoutManager(requireContext())
-        lm.flexWrap = FlexWrap.WRAP
-        lm.alignItems = AlignItems.FLEX_START
-        lm.justifyContent = JustifyContent.CENTER
-        return lm
     }
 
     private fun getStaggeredLayoutManager(): StaggeredGridLayoutManager {
@@ -201,7 +209,7 @@ class NotesFragment : Fragment() {
     }
 
     private fun getLayoutManager(): RecyclerView.LayoutManager {
-        if (!viewTypeState.value) return getStaggeredLayoutManager()
+        if (viewTypeState.value == GRID_VIEW) return getStaggeredLayoutManager()
         return LinearLayoutManager(requireContext())
     }
 }
