@@ -11,6 +11,7 @@
         android:background="@color/primary"
         app:titleTextColor="@color/white"
         app:subtitleTextColor="@color/white"
+        app:theme="@style/NoteApp.Toolbar"
         app:title="@string/app_title"
         tools:subtitle="@string/app_title"
         android:layout_width="match_parent"
