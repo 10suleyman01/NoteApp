@@ -3,14 +3,14 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    app:cardCornerRadius="8dp"
+    app:cardCornerRadius="12dp"
     android:layout_margin="8dp"
     app:elevation="4dp"
     app:strokeWidth="1dp"
     android:clickable="true"
     android:focusable="true"
+    app:cardBackgroundColor="@color/yellow"
     android:layout_gravity="center|top"
-    app:background="?attr/selectableItemBackground"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -29,6 +29,16 @@
             app:layout_constraintTop_toTopOf="parent"
             tools:text="1 hour ago" />
 
+        <View
+            android:id="@+id/checked"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:visibility="gone"
+            tools:visibility="visible"
+            android:background="@drawable/baseline_check_24"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
         <TextView
             android:id="@+id/tvTitle"
             android:layout_width="wrap_content"
@@ -46,7 +56,6 @@
             android:maxHeight="200dp"
             android:maxLength="140"
             android:textSize="12sp"
-
             app:layout_constraintTop_toBottomOf="@+id/tvTitle"
             tools:text="Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum." />
 

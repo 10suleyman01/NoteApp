@@ -6,4 +6,5 @@
     <string name="tap_to_add_text">Начните вводить текст</string>
     <string name="save">Сохранить</string>
     <string name="change_view">Изменить вид</string>
+    <string name="delete">Удалить</string>
 </resources>

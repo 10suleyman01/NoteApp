@@ -1,11 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    >
+
+    <item
+        android:id="@+id/delete"
+        android:icon="@drawable/baseline_delete_24"
+        android:visible="false"
+        tools:visible="true"
+        app:showAsAction="ifRoom"
+        android:title="@string/delete" />
 
     <item
         android:id="@+id/viewType"
         android:icon="@drawable/baseline_grid_view_24"
         app:showAsAction="always"
         android:title="@string/change_view" />
+
+
 
 </menu>

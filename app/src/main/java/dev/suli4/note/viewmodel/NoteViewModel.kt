@@ -38,6 +38,12 @@ class NoteViewModel @Inject constructor(
         allNotesUseCase.editNoteUseCase.invoke(note)
     }
 
+    fun deleteNotes(vararg note: NoteModel) = viewModelScope.launch {
+        note.forEach { item ->
+            allNotesUseCase.deleteNoteUseCase.invoke(item)
+        }
+    }
+
     sealed class NotesState {
         data class GetAllNotes(val notes: List<NoteModel>) : NotesState()
         data class Loading(val isLoading: Boolean) : NotesState()

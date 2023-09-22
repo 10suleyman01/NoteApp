@@ -67,8 +67,10 @@ class CreateNoteFragment : Fragment() {
             }
 
             if (note != null) {
+
                 etNoteTitle.setText(note.title)
                 etNoteText.setText(note.text)
+
                 val view = when (note.color) {
                     NoteModel.Color.Red -> binding.red
                     NoteModel.Color.Orange -> binding.orange

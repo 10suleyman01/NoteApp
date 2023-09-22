@@ -15,7 +15,7 @@ data class NoteModel(
     var color: Color
 ): Parcelable {
 
-    enum class Color(val color: String) {
+    enum class Color(val value: String) {
         White("#ffffff"),
         Red("#E57373"),
         Orange("#f5c27d"),
