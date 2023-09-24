@@ -10,5 +10,7 @@ interface NotesRepository {
 
     suspend fun update(note: NoteModel)
 
+    suspend fun searchNotes(query: String?): Flow<List<NoteModel>>
+
     suspend fun delete(note: NoteModel)
 }

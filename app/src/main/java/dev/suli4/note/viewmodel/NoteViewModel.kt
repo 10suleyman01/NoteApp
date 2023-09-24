@@ -8,7 +8,6 @@ import dev.suli4.note.usecases.AllUseCases
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -25,9 +24,10 @@ class NoteViewModel @Inject constructor(
     }
 
     fun loadNotes() = viewModelScope.launch {
-        allNotesUseCase.getAllNotesUseCase.invoke().collectLatest {notes ->
+        allNotesUseCase.getAllNotesUseCase.invoke().collectLatest { notes ->
             _state.value = NotesState.GetAllNotes(notes.sortedByDescending { it.createdAt })
         }
+        _state.value = NotesState.Loading(false)
     }
 
     fun insertNote(note: NoteModel) = viewModelScope.launch {
@@ -41,6 +41,17 @@ class NoteViewModel @Inject constructor(
     fun deleteNotes(vararg note: NoteModel) = viewModelScope.launch {
         note.forEach { item ->
             allNotesUseCase.deleteNoteUseCase.invoke(item)
+        }
+    }
+
+    fun searchItems(query: String?) = viewModelScope.launch {
+        if (!query.isNullOrEmpty()) {
+            allNotesUseCase.searchNotesUseCase.invoke("%${query.lowercase()}%").collectLatest { notes ->
+                _state.value = NotesState.GetAllNotes(notes)
+            }
+            _state.value = NotesState.Loading(false)
+        } else {
+            loadNotes()
         }
     }
 

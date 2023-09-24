@@ -15,7 +15,8 @@ data class NoteModel(
     var color: Color
 ): Parcelable {
 
-    enum class Color(val value: String) {
+    @Parcelize
+    enum class Color(val value: String): Parcelable {
         White("#ffffff"),
         Red("#E57373"),
         Orange("#f5c27d"),

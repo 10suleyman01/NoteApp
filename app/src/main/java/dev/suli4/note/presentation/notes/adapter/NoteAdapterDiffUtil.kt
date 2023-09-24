@@ -17,7 +17,7 @@ class NoteAdapterDiffUtil(
 
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
         val (title, text, createdAt) = oldList[oldItemPosition]
-        val (nTitle, nText, nCreatedAt) = newList[oldItemPosition]
+        val (nTitle, nText, nCreatedAt) = newList[newItemPosition]
         return title == nTitle && text == nText && createdAt == nCreatedAt
     }
 }

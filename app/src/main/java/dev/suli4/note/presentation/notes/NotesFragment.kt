@@ -10,6 +10,7 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
@@ -34,6 +35,7 @@ import dev.suli4.note.databinding.FragmentNotesBinding
 import dev.suli4.note.ext.PreferencesKeys
 import dev.suli4.note.ext.dataStore
 import dev.suli4.note.ext.getDrawable
+import dev.suli4.note.ext.getModel
 import dev.suli4.note.model.NoteModel
 import dev.suli4.note.presentation.MainActivity
 import dev.suli4.note.presentation.notes.adapter.NoteAdapter
@@ -72,7 +74,7 @@ class NotesFragment : Fragment() {
     private lateinit var adapter: NoteAdapter
 
     private var tracker: SelectionTracker<Long>? = null
-    val shouldToDeleteItems: MutableList<NoteModel> = mutableListOf()
+    private val shouldToDeleteItems: MutableList<NoteModel> = mutableListOf()
 
     private val viewTypeState: MutableStateFlow<Boolean> = MutableStateFlow(GRID_VIEW)
     private val selectedItemsState: MutableStateFlow<String> = MutableStateFlow("")
@@ -114,8 +116,6 @@ class NotesFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentNotesBinding.inflate(layoutInflater)
-
-
         return binding.root
     }
 
@@ -141,6 +141,20 @@ class NotesFragment : Fragment() {
                 menu.findItem(R.id.viewType).icon = getIconViewType()
                 menuItem = menu.findItem(R.id.delete)
                 menuItem?.isVisible = deleteActionIsVisible.value
+
+                val searchItem = menu.findItem(R.id.search)
+                val searchView = searchItem.actionView as SearchView
+
+                searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                    override fun onQueryTextSubmit(query: String?): Boolean {
+                        return false
+                    }
+
+                    override fun onQueryTextChange(newText: String?): Boolean {
+                        viewModel.searchItems(newText)
+                        return false
+                    }
+                })
             }
 
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
@@ -152,6 +166,10 @@ class NotesFragment : Fragment() {
                         }
                         menuItem.icon = getIconViewType()
                         binding.rvNotes.layoutManager = getLayoutManager()
+                    }
+
+                    R.id.search -> {
+
                     }
 
                     R.id.delete -> {
@@ -276,11 +294,7 @@ class NotesFragment : Fragment() {
     }
 
     private fun getNoteFromBundle(bundle: Bundle): NoteModel? {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            bundle.getParcelable(NOTE_KEY, NoteModel::class.java)
-        } else {
-            bundle.getParcelable(NOTE_KEY)
-        }
+        return bundle.getModel(NOTE_KEY, NoteModel::class.java)
     }
 
     override fun onDestroy() {

@@ -75,14 +75,18 @@ class NoteAdapter : RecyclerView.Adapter<NoteAdapter.NoteViewHolder>() {
 
         fun bind(note: NoteModel) {
             itemNoteItemBinding.apply {
-                if (note.color == NoteModel.Color.White) {
+                if (note.color == NoteModel.Color.White ||
+                    note.color == NoteModel.Color.Yellow
+                ) {
                     tvTitle.setTextColor(Color.BLACK)
                     tvText.setTextColor(Color.BLACK)
+                    tvCreatedAt.setTextColor(Color.BLACK)
                 } else {
                     tvTitle.setTextColor(Color.WHITE)
                     tvText.setTextColor(Color.WHITE)
+                    tvCreatedAt.setTextColor(Color.WHITE)
                 }
-                tvTitle.text = "${note.title} ${note.id}"
+                tvTitle.text = note.title
                 tvText.text = note.text
                 tvCreatedAt.text = getTimeFormatted(note.createdAt)
                 val color = note.color.value
@@ -102,7 +106,7 @@ class NoteAdapter : RecyclerView.Adapter<NoteAdapter.NoteViewHolder>() {
         fun getItemDetails(): ItemDetailsLookup.ItemDetails<Long> =
             object : ItemDetailsLookup.ItemDetails<Long>() {
                 override fun getPosition(): Int = adapterPosition
-                override fun getSelectionKey(): Long = notes[adapterPosition].id
+                override fun getSelectionKey(): Long = notes[position].id
             }
 
 

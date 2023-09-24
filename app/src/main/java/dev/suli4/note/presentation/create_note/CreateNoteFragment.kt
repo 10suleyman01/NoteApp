@@ -1,6 +1,7 @@
 package dev.suli4.note.presentation.create_note
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,6 +14,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.suli4.note.R
 import dev.suli4.note.databinding.FragmentCreateNoteBinding
 import dev.suli4.note.ext.getDrawable
+import dev.suli4.note.ext.getModel
 import dev.suli4.note.ext.text
 import dev.suli4.note.model.NoteModel
 import dev.suli4.note.presentation.notes.NotesFragment.Companion.NOTE_KEY
@@ -32,6 +34,17 @@ class CreateNoteFragment : Fragment() {
     private val colorState: MutableStateFlow<NoteModel.Color> =
         MutableStateFlow(NoteModel.Color.Red)
 
+    companion object {
+        const val COLOR_STATE = "color_state"
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        colorState.value = savedInstanceState?.getModel(COLOR_STATE, NoteModel.Color::class.java)
+            ?: colorState.value
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -41,45 +54,41 @@ class CreateNoteFragment : Fragment() {
         return binding.root
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelable(COLOR_STATE, colorState.value)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        onColorSelected(colorState.value, binding.red)
+        onColorSelected(colorState.value, binding)
 
         val note = args?.note
 
         binding.apply {
 
             red.setOnClickListener {
-                onColorSelected(NoteModel.Color.Red, it)
+                onColorSelected(NoteModel.Color.Red, binding)
             }
             orange.setOnClickListener {
-                onColorSelected(NoteModel.Color.Orange, it)
+                onColorSelected(NoteModel.Color.Orange, binding)
             }
             yellow.setOnClickListener {
-                onColorSelected(NoteModel.Color.Yellow, it)
+                onColorSelected(NoteModel.Color.Yellow, binding)
             }
             cyan.setOnClickListener {
-                onColorSelected(NoteModel.Color.Cyan, it)
+                onColorSelected(NoteModel.Color.Cyan, binding)
             }
             pink.setOnClickListener {
-                onColorSelected(NoteModel.Color.Pink, it)
+                onColorSelected(NoteModel.Color.Pink, binding)
             }
 
             if (note != null) {
-
                 etNoteTitle.setText(note.title)
                 etNoteText.setText(note.text)
 
-                val view = when (note.color) {
-                    NoteModel.Color.Red -> binding.red
-                    NoteModel.Color.Orange -> binding.orange
-                    NoteModel.Color.Yellow -> binding.yellow
-                    NoteModel.Color.Cyan -> binding.cyan
-                    NoteModel.Color.Pink -> binding.pink
-                    else -> binding.red
-                }
-                onColorSelected(note.color, view)
+                onColorSelected(note.color, binding)
             }
 
             fabSaveNote.setOnClickListener {
@@ -116,29 +125,30 @@ class CreateNoteFragment : Fragment() {
         }
     }
 
-    private fun onColorSelected(color: NoteModel.Color, view: View) {
+    private fun onColorSelected(color: NoteModel.Color, binding: FragmentCreateNoteBinding) {
         unselectOther(binding)
         colorState.value = color
         when (color) {
             NoteModel.Color.Red -> {
-                view.background = getDrawable(R.drawable.color_shape_red_selected)
+                binding.red.background = getDrawable(R.drawable.color_shape_red_selected)
             }
 
             NoteModel.Color.Orange -> {
-                view.background = getDrawable(R.drawable.color_shape_orange_selected)
+                binding.orange.background = getDrawable(R.drawable.color_shape_orange_selected)
             }
 
             NoteModel.Color.Yellow -> {
-                view.background = getDrawable(R.drawable.color_shape_yellow_selected)
+                binding.yellow.background = getDrawable(R.drawable.color_shape_yellow_selected)
             }
 
             NoteModel.Color.Cyan -> {
-                view.background = getDrawable(R.drawable.color_shape_cyan_selected)
+                binding.cyan.background = getDrawable(R.drawable.color_shape_cyan_selected)
             }
 
             NoteModel.Color.Pink -> {
-                view.background = getDrawable(R.drawable.color_shape_pink_selected)
+                binding.pink.background = getDrawable(R.drawable.color_shape_pink_selected)
             }
+
             else -> {}
         }
     }
@@ -152,13 +162,11 @@ class CreateNoteFragment : Fragment() {
             pink.background = getDrawable(R.drawable.color_shape_pink)
         }
     }
-
     override fun onDestroy() {
         super.onDestroy()
 
         _binding = null
     }
-
 
 
 }
