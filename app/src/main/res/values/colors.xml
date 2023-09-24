@@ -10,14 +10,14 @@
     <color name="et_text_color">#B3B2B2</color>
 
     <color name="red">#E57373</color>
-    <color name="red_selected">#D16666</color>
+    <color name="red_selected">#C05A5A</color>
     <color name="orange">#f5c27d</color>
-    <color name="orange_selected">#F3B45F</color>
+    <color name="orange_selected">#EFAE57</color>
     <color name="yellow">#ffe666</color>
-    <color name="yellow_selected">#F3D852</color>
+    <color name="yellow_selected">#E5CA45</color>
     <color name="cyan">#bfe7f6</color>
-    <color name="cyan_selected">#9DD8ED</color>
+    <color name="cyan_selected">#89CAE1</color>
     <color name="pink">#f6cebf</color>
-    <color name="pink_selected">#E3B4A2</color>
+    <color name="pink_selected">#D3A18D</color>
 
 </resources>

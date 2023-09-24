@@ -12,6 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
+import androidx.core.view.isVisible
 import androidx.datastore.preferences.core.edit
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.clearFragmentResult
@@ -23,7 +24,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.selection.SelectionPredicates
 import androidx.recyclerview.selection.SelectionTracker
-import androidx.recyclerview.selection.StableIdKeyProvider
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -38,6 +38,7 @@ import dev.suli4.note.model.NoteModel
 import dev.suli4.note.presentation.MainActivity
 import dev.suli4.note.presentation.notes.adapter.NoteAdapter
 import dev.suli4.note.presentation.notes.adapter.NoteClickListener
+import dev.suli4.note.presentation.notes.adapter.NotesKeyProvider
 import dev.suli4.note.viewmodel.NoteViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -100,6 +101,11 @@ class NotesFragment : Fragment() {
 
         outState.putString(SELECTED_ITEMS_SAVE_STATE, selectedItemsState.value)
         outState.putBoolean(DELETE_ACTION_SAVE_STATE, deleteActionIsVisible.value)
+    }
+
+    override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        super.onViewStateRestored(savedInstanceState)
+        tracker?.onRestoreInstanceState(savedInstanceState)
     }
 
     override fun onCreateView(
@@ -166,7 +172,7 @@ class NotesFragment : Fragment() {
             tracker = SelectionTracker.Builder(
                 SELECTION_NOTES_ID,
                 binding.rvNotes,
-                StableIdKeyProvider(binding.rvNotes),
+                NotesKeyProvider(adapter),
                 NoteAdapter.ItemLookup(binding.rvNotes),
                 StorageStrategy.createLongStorage()
             ).withSelectionPredicate(
@@ -235,26 +241,26 @@ class NotesFragment : Fragment() {
             override fun onItemStateChanged(key: Long, selected: Boolean) {
                 super.onItemStateChanged(key, selected)
 
-                val pos = key.toInt()
-
-
                 if (selected) {
-                    shouldToDeleteItems.add(adapter.notes[pos])
+                    adapter.notes.find { it.id == key }?.let { shouldToDeleteItems.add(it) }
                 } else {
-                    shouldToDeleteItems.remove(adapter.notes[pos])
+                    shouldToDeleteItems.remove(adapter.notes.find { it.id == key })
                 }
 
             }
 
             override fun onSelectionChanged() {
+
                 val notes: Int? = tracker?.selection?.size()
                 notes?.let { size ->
                     if (size > 0) {
                         selectedItemsState.value = "Выбрано: $size"
                         deleteActionIsVisible.value = true
+                        binding.fabNewNote.isVisible = false
                     } else {
                         selectedItemsState.value = ""
                         deleteActionIsVisible.value = false
+                        binding.fabNewNote.isVisible = true
                     }
                     menuItem?.isVisible = deleteActionIsVisible.value
                     setSubTitle(selectedItemsState.value)

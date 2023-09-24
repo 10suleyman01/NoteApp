@@ -8,9 +8,8 @@
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
-        android:background="@color/primary"
-        app:titleTextColor="@color/white"
-        app:subtitleTextColor="@color/white"
+        app:titleTextColor="@color/black"
+        app:subtitleTextColor="@color/black"
         app:theme="@style/NoteApp.Toolbar"
         app:title="@string/app_title"
         tools:subtitle="@string/app_title"

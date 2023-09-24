@@ -1,19 +1,18 @@
 <resources>
     <!-- Base application theme. -->
     <style name="Base.Theme.Note" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorAccent">@color/accent</item>
     </style>
 
     <style name="NoteApp.Toolbar" parent="Base.Theme.Note">
         <!--This line changes the color of text in Toolbar-->
-        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorPrimary">@color/black</item>
         <!--This line changes the color of icons in toolbar (back, overflow menu icons)-->
-        <item name="android:textColorSecondary">@color/white</item>
+        <item name="android:textColorSecondary">@color/black</item>
     </style>
 
     <style name="Theme.Note" parent="Base.Theme.Note" />
 
-    <string name="search_hint">Найти</string>
+
 </resources>

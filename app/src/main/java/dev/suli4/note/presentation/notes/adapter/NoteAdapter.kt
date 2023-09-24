@@ -1,18 +1,19 @@
 package dev.suli4.note.presentation.notes.adapter
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.ViewGroup
+import androidx.core.view.isVisible
 import androidx.recyclerview.selection.ItemDetailsLookup
-import androidx.recyclerview.selection.ItemKeyProvider
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import dev.suli4.note.databinding.NoteItemLinearBinding
+import dev.suli4.note.ext.getTimeFormatted
 import dev.suli4.note.model.NoteModel
-import dev.suli4.note.presentation.notes.viewholder.NoteViewHolder
 
-class NoteAdapter : RecyclerView.Adapter<NoteViewHolder>() {
+class NoteAdapter : RecyclerView.Adapter<NoteAdapter.NoteViewHolder>() {
 
     init {
         setHasStableIds(true)
@@ -40,7 +41,7 @@ class NoteAdapter : RecyclerView.Adapter<NoteViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NoteViewHolder {
         val layoutInflater = LayoutInflater.from(parent.context)
-        return NoteViewHolder(NoteItemLinearBinding.inflate(layoutInflater, parent, false), tracker)
+        return NoteViewHolder(NoteItemLinearBinding.inflate(layoutInflater, parent, false))
     }
 
     override fun getItemCount() = notes.size
@@ -66,6 +67,45 @@ class NoteAdapter : RecyclerView.Adapter<NoteViewHolder>() {
             }
             return null
         }
+    }
+
+    inner class NoteViewHolder(
+        private val itemNoteItemBinding: NoteItemLinearBinding
+    ) : RecyclerView.ViewHolder(itemNoteItemBinding.root) {
+
+        fun bind(note: NoteModel) {
+            itemNoteItemBinding.apply {
+                if (note.color == NoteModel.Color.White) {
+                    tvTitle.setTextColor(Color.BLACK)
+                    tvText.setTextColor(Color.BLACK)
+                } else {
+                    tvTitle.setTextColor(Color.WHITE)
+                    tvText.setTextColor(Color.WHITE)
+                }
+                tvTitle.text = "${note.title} ${note.id}"
+                tvText.text = note.text
+                tvCreatedAt.text = getTimeFormatted(note.createdAt)
+                val color = note.color.value
+                setCardBackgroundColor(color)
+
+                tracker?.let {
+                    checked.isVisible = it.isSelected(note.id)
+                }
+            }
+        }
+
+
+        private fun setCardBackgroundColor(color: String) {
+            itemNoteItemBinding.root.setCardBackgroundColor(Color.parseColor(color))
+        }
+
+        fun getItemDetails(): ItemDetailsLookup.ItemDetails<Long> =
+            object : ItemDetailsLookup.ItemDetails<Long>() {
+                override fun getPosition(): Int = adapterPosition
+                override fun getSelectionKey(): Long = notes[adapterPosition].id
+            }
+
+
     }
 
 }
