@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Note</string>
+    <string name="app_title">Notes</string>
+    <string name="create_new_note">New note</string>
+    <string name="title">Title</string>
+    <string name="tap_to_add_text">Tap to add text</string>
+    <string name="save">Save</string>
+    <string name="change_view">Change view</string>
+    <string name="delete">Delete</string>
+    <string name="search">Find</string>
+    <string name="search_hint">Find</string>
+    <string name="field_cannot_be_empty">Cannot be empty!</string>
+    <string name="choose_color">Choose color</string>
+    <string name="select_color">Select color</string>
+</resources>

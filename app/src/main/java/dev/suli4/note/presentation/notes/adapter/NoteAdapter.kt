@@ -86,7 +86,14 @@ class NoteAdapter : RecyclerView.Adapter<NoteAdapter.NoteViewHolder>() {
                     tvText.setTextColor(Color.WHITE)
                     tvCreatedAt.setTextColor(Color.WHITE)
                 }
-                tvTitle.text = note.title
+
+                if (note.title.isEmpty()) {
+                    tvTitle.isVisible = false
+                } else {
+                    tvTitle.isVisible = true
+                    tvTitle.text = note.title
+                }
+
                 tvText.text = note.text
                 tvCreatedAt.text = getTimeFormatted(note.createdAt)
                 val color = note.color.value

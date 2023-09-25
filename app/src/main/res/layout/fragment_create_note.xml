@@ -2,50 +2,9 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:fitsSystemWindows="true"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <com.google.android.flexbox.FlexboxLayout
-        android:id="@+id/colors"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="16dp"
-        app:justifyContent="space_between"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <View
-            android:id="@+id/red"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/color_shape_red" />
-
-        <View
-            android:id="@+id/orange"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/color_shape_orange" />
-
-        <View
-            android:id="@+id/yellow"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/color_shape_yellow" />
-
-        <View
-            android:id="@+id/cyan"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/color_shape_cyan" />
-
-        <View
-            android:id="@+id/pink"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/color_shape_pink" />
-
-    </com.google.android.flexbox.FlexboxLayout>
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
 
     <EditText
         android:id="@+id/etNoteTitle"
@@ -58,30 +17,29 @@
         android:paddingEnd="16dp"
         android:textColorHint="@color/et_text_color"
         android:textSize="22sp"
-        app:layout_constraintEnd_toEndOf="@id/colors"
-        app:layout_constraintStart_toStartOf="@id/colors"
-        app:layout_constraintTop_toBottomOf="@+id/colors"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         tools:text="Title" />
 
     <EditText
         android:id="@+id/etNoteText"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:background="@null"
         android:ems="10"
         android:gravity="top"
         android:hint="@string/tap_to_add_text"
+        android:padding="8dp"
         android:inputType="textMultiLine"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:scrollHorizontally="false"
         android:textColorHint="@color/et_text_color"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/etNoteTitle"
-        app:layout_constraintVertical_bias="0.0"
         tools:text="Tap to add text" />
 
 
@@ -100,7 +58,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/baseline_done_24"
         app:tint="@color/white" />
-
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

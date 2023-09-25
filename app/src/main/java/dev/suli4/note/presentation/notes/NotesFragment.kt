@@ -1,15 +1,14 @@
 package dev.suli4.note.presentation.notes
 
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
@@ -59,11 +58,13 @@ class NotesFragment : Fragment() {
     companion object {
         const val REQUEST_KEY_NEW_NOTE = "new_note"
         const val REQUEST_KEY_EDIT_NOTE = "edit_note"
+        const val REQUEST_KEY_DELETE_NOTE = "delete_note"
         const val NOTE_KEY = "note"
         const val NOTE_POSITION = "position"
 
         const val SELECTED_ITEMS_SAVE_STATE = "selected_items"
         const val DELETE_ACTION_SAVE_STATE = "delete_action"
+        const val SEARCH_QUERY_TEXT_STATE = "search_state"
 
         const val SELECTION_NOTES_ID = "selection-notes"
 
@@ -77,10 +78,11 @@ class NotesFragment : Fragment() {
     private val shouldToDeleteItems: MutableList<NoteModel> = mutableListOf()
 
     private val viewTypeState: MutableStateFlow<Boolean> = MutableStateFlow(GRID_VIEW)
+    private val searchQueryState: MutableStateFlow<String> = MutableStateFlow("")
     private val selectedItemsState: MutableStateFlow<String> = MutableStateFlow("")
     private val deleteActionIsVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
-    private var menuItem: MenuItem? = null
+    private var menuDeleteItem: MenuItem? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -94,6 +96,21 @@ class NotesFragment : Fragment() {
         selectedItemsState.value = savedInstanceState?.getString(SELECTED_ITEMS_SAVE_STATE) ?: ""
         deleteActionIsVisible.value =
             savedInstanceState?.getBoolean(DELETE_ACTION_SAVE_STATE) ?: false
+        searchQueryState.value = savedInstanceState?.getString(SEARCH_QUERY_TEXT_STATE) ?: ""
+
+        requireActivity().onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    tracker?.let {
+                        if (it.hasSelection()) {
+                            it.clearSelection()
+                        } else {
+                            requireActivity().finish()
+                        }
+                    }
+                }
+            })
 
     }
 
@@ -102,6 +119,7 @@ class NotesFragment : Fragment() {
         tracker?.onSaveInstanceState(outState)
 
         outState.putString(SELECTED_ITEMS_SAVE_STATE, selectedItemsState.value)
+        outState.putString(SEARCH_QUERY_TEXT_STATE, searchQueryState.value)
         outState.putBoolean(DELETE_ACTION_SAVE_STATE, deleteActionIsVisible.value)
     }
 
@@ -139,19 +157,31 @@ class NotesFragment : Fragment() {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.menu_notes, menu)
                 menu.findItem(R.id.viewType).icon = getIconViewType()
-                menuItem = menu.findItem(R.id.delete)
-                menuItem?.isVisible = deleteActionIsVisible.value
+
+                menuDeleteItem = menu.findItem(R.id.delete)
+                menuDeleteItem?.isVisible = deleteActionIsVisible.value
 
                 val searchItem = menu.findItem(R.id.search)
                 val searchView = searchItem.actionView as SearchView
 
+                if (searchQueryState.value.isNotEmpty()) {
+                    searchItem.expandActionView()
+                    searchView.setQuery(searchQueryState.value, true)
+                    searchView.clearFocus()
+                    viewModel.searchItems(searchQueryState.value)
+                }
+
                 searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                     override fun onQueryTextSubmit(query: String?): Boolean {
-                        return false
+                        viewModel.searchItems(query)
+                        return true
                     }
 
                     override fun onQueryTextChange(newText: String?): Boolean {
-                        viewModel.searchItems(newText)
+                        if (adapter.notes.size > 1) {
+                            searchQueryState.value = newText ?: ""
+                            viewModel.searchItems(newText)
+                        }
                         return false
                     }
                 })
@@ -166,10 +196,6 @@ class NotesFragment : Fragment() {
                         }
                         menuItem.icon = getIconViewType()
                         binding.rvNotes.layoutManager = getLayoutManager()
-                    }
-
-                    R.id.search -> {
-
                     }
 
                     R.id.delete -> {
@@ -232,8 +258,14 @@ class NotesFragment : Fragment() {
             }
         }
 
-        setSubTitle(selectedItemsState.value)
+        setFragmentResultListener(REQUEST_KEY_DELETE_NOTE) { _, bundle: Bundle ->
+            val note = getNoteFromBundle(bundle)
+            if (note != null) {
+                viewModel.deleteNotes(note)
+            }
+        }
 
+        setSubTitle(selectedItemsState.value)
 
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -268,7 +300,6 @@ class NotesFragment : Fragment() {
             }
 
             override fun onSelectionChanged() {
-
                 val notes: Int? = tracker?.selection?.size()
                 notes?.let { size ->
                     if (size > 0) {
@@ -280,7 +311,7 @@ class NotesFragment : Fragment() {
                         deleteActionIsVisible.value = false
                         binding.fabNewNote.isVisible = true
                     }
-                    menuItem?.isVisible = deleteActionIsVisible.value
+                    menuDeleteItem?.isVisible = deleteActionIsVisible.value
                     setSubTitle(selectedItemsState.value)
                 }
             }
@@ -301,8 +332,6 @@ class NotesFragment : Fragment() {
         super.onDestroy()
 
         _binding = null
-
-        Log.d("Notes", "onDestroy")
 
         clearFragmentResult(REQUEST_KEY_NEW_NOTE)
         clearFragmentResult(REQUEST_KEY_EDIT_NOTE)

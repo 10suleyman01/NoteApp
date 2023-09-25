@@ -1,9 +1,13 @@
 package dev.suli4.note.presentation
 
 import android.os.Bundle
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import dev.suli4.note.databinding.ActivityMainBinding
+import dev.suli4.note.presentation.create_note.CreateNoteFragment
+import dev.suli4.note.presentation.notes.NotesFragment
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
