@@ -10,6 +10,12 @@
         android:title="@string/choose_color"/>
 
     <item
+        android:id="@+id/pickImage"
+        android:icon="@drawable/baseline_attach_file_24"
+        app:showAsAction="always"
+        android:title="@string/add_image"/>
+
+    <item
         android:id="@+id/delete"
         android:icon="@drawable/baseline_delete_24"
         android:visible="false"

@@ -12,4 +12,5 @@
     <string name="field_cannot_be_empty">Поле не может быть пустое!</string>
     <string name="choose_color">Выбрать цвет</string>
     <string name="select_color">Выберите цвет</string>
+    <string name="add_image">Добавить картинку</string>
 </resources>

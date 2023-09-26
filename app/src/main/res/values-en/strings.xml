@@ -13,4 +13,5 @@
     <string name="field_cannot_be_empty">Cannot be empty!</string>
     <string name="choose_color">Choose color</string>
     <string name="select_color">Select color</string>
+    <string name="add_image">Add Image</string>
 </resources>

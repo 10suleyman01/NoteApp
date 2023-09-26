@@ -1,12 +1,16 @@
 package dev.suli4.note.presentation.create_note
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.core.view.MenuHost
@@ -24,6 +28,7 @@ import dev.suli4.note.ext.getDrawable
 import dev.suli4.note.ext.getModel
 import dev.suli4.note.ext.text
 import dev.suli4.note.model.NoteModel
+import dev.suli4.note.presentation.MainActivity.Companion.pickMedia
 import dev.suli4.note.presentation.notes.NotesFragment.Companion.NOTE_KEY
 import dev.suli4.note.presentation.notes.NotesFragment.Companion.NOTE_POSITION
 import dev.suli4.note.presentation.notes.NotesFragment.Companion.REQUEST_KEY_DELETE_NOTE
@@ -46,6 +51,8 @@ class CreateNoteFragment : Fragment() {
     private val colorState: MutableStateFlow<NoteModel.Color?> =
         MutableStateFlow(null)
 
+
+
     private var alertDialog: AlertDialog? = null
 
     companion object {
@@ -53,8 +60,10 @@ class CreateNoteFragment : Fragment() {
         const val SHOW_COLOR_VIEW = "show_color_view"
     }
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
 
         note = args?.note
 
@@ -154,6 +163,10 @@ class CreateNoteFragment : Fragment() {
                     R.id.chooseColor -> {
                         alertDialog = getChooseColorDialog()
                         alertDialog?.show()
+                    }
+
+                    R.id.pickImage -> {
+                        pickMedia?.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     }
 
                     R.id.delete -> {
