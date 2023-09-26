@@ -8,6 +8,10 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.AlphaAnimation
+import android.view.animation.Animation
+import android.view.animation.DecelerateInterpolator
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuHost
@@ -25,7 +29,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.selection.SelectionPredicates
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -196,6 +199,8 @@ class NotesFragment : Fragment() {
                         }
                         menuItem.icon = getIconViewType()
                         binding.rvNotes.layoutManager = getLayoutManager()
+                        // animation change layout manager spans
+                        animateChangeView()
                     }
 
                     R.id.delete -> {
@@ -236,7 +241,6 @@ class NotesFragment : Fragment() {
                 val action = NotesFragmentDirections.actionNotesFragmentToCreateNoteFragment()
                 findNavController().navigate(action)
             }
-
 
         }
 
@@ -283,6 +287,13 @@ class NotesFragment : Fragment() {
                 }
             }
         }
+    }
+
+    private fun animateChangeView() {
+        val fadeIn: Animation = AlphaAnimation(0f, 1f)
+        fadeIn.interpolator = AccelerateInterpolator()
+        fadeIn.duration = 300
+        binding.rvNotes.startAnimation(fadeIn)
     }
 
     private fun selectionObserver() =
@@ -350,17 +361,17 @@ class NotesFragment : Fragment() {
         (requireActivity() as MainActivity).supportActionBar?.subtitle = subtitle
     }
 
-    private fun getStaggeredLayoutManager(): StaggeredGridLayoutManager {
+    private fun getStaggeredLayoutManager(isLinear: Boolean): StaggeredGridLayoutManager {
         val displayMetrics = requireActivity().resources.displayMetrics
         val dpWidth = displayMetrics.widthPixels / displayMetrics.density
-        val spanCount = (dpWidth / 150).toInt()
+        val spanCount = if (isLinear) 1 else (dpWidth / 150).toInt()
         val lm = StaggeredGridLayoutManager(spanCount, StaggeredGridLayoutManager.VERTICAL)
         lm.gapStrategy = StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS
         return lm
     }
 
     private fun getLayoutManager(): RecyclerView.LayoutManager {
-        if (viewTypeState.value == GRID_VIEW) return getStaggeredLayoutManager()
-        return LinearLayoutManager(requireContext())
+        if (viewTypeState.value == GRID_VIEW) return getStaggeredLayoutManager(false)
+        return getStaggeredLayoutManager(true)
     }
 }
