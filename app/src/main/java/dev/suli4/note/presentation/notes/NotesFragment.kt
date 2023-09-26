@@ -11,7 +11,6 @@ import android.view.ViewGroup
 import android.view.animation.AccelerateInterpolator
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
-import android.view.animation.DecelerateInterpolator
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuHost
@@ -181,10 +180,8 @@ class NotesFragment : Fragment() {
                     }
 
                     override fun onQueryTextChange(newText: String?): Boolean {
-                        if (adapter.notes.size > 1) {
-                            searchQueryState.value = newText ?: ""
-                            viewModel.searchItems(newText)
-                        }
+                        searchQueryState.value = newText ?: ""
+                        viewModel.searchItems(newText)
                         return false
                     }
                 })
