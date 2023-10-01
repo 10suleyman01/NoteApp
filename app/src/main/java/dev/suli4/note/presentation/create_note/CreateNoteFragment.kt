@@ -1,22 +1,19 @@
 package dev.suli4.note.presentation.create_note
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResult
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -28,7 +25,6 @@ import dev.suli4.note.ext.getDrawable
 import dev.suli4.note.ext.getModel
 import dev.suli4.note.ext.text
 import dev.suli4.note.model.NoteModel
-import dev.suli4.note.presentation.MainActivity.Companion.pickMedia
 import dev.suli4.note.presentation.notes.NotesFragment.Companion.NOTE_KEY
 import dev.suli4.note.presentation.notes.NotesFragment.Companion.NOTE_POSITION
 import dev.suli4.note.presentation.notes.NotesFragment.Companion.REQUEST_KEY_DELETE_NOTE
@@ -48,23 +44,21 @@ class CreateNoteFragment : Fragment() {
     private val args: CreateNoteFragmentArgs? by navArgs()
     private var note: NoteModel? = null
 
+    private val viewModel: CreateNoteViewModel by viewModels()
+
     private val colorState: MutableStateFlow<NoteModel.Color?> =
         MutableStateFlow(null)
-
-
 
     private var alertDialog: AlertDialog? = null
 
     companion object {
         const val COLOR_STATE = "color_state"
+        const val URI_STATE = "uri_state"
         const val SHOW_COLOR_VIEW = "show_color_view"
     }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-
         note = args?.note
 
         if (savedInstanceState != null) {
@@ -110,7 +104,7 @@ class CreateNoteFragment : Fragment() {
         binding.apply {
 
             if (note != null) {
-                etNoteTitle.setText(note?.text)
+                etNoteTitle.setText(note?.title)
                 etNoteText.setText(note?.text)
             }
 
@@ -121,22 +115,25 @@ class CreateNoteFragment : Fragment() {
 
                 if (text.isNotEmpty()) {
                     if (note != null) {
-                        note?.title = title
-                        note?.text = text
-                        colorState.value?.let { state ->
-                            note?.color = state
+                        viewModel.editNote(
+                            args?.position,
+                            note?.copy(
+                                title = title,
+                                text = text,
+                                color = colorState.value ?: note?.color ?: NoteModel.Color.Red
+                            )
+                        ) { note ->
+                            setFragmentResult(REQUEST_KEY_EDIT_NOTE, note)
                         }
-                        val noteBundle = bundleOf(NOTE_KEY to note, NOTE_POSITION to args?.position)
-                        setFragmentResult(REQUEST_KEY_EDIT_NOTE, noteBundle)
                     } else {
-                        val noteModel = NoteModel(
+                        viewModel.createNote(
                             title = title,
                             text = text,
                             createdAt = System.currentTimeMillis(),
                             color = colorState.value ?: NoteModel.Color.Red,
-                        )
-                        val noteBundle = bundleOf(NOTE_KEY to noteModel)
-                        setFragmentResult(REQUEST_KEY_NEW_NOTE, noteBundle)
+                        ) { note ->
+                            setFragmentResult(REQUEST_KEY_NEW_NOTE, note)
+                        }
                     }
                     findNavController().popBackStack()
                 } else {
@@ -163,10 +160,6 @@ class CreateNoteFragment : Fragment() {
                     R.id.chooseColor -> {
                         alertDialog = getChooseColorDialog()
                         alertDialog?.show()
-                    }
-
-                    R.id.pickImage -> {
-                        pickMedia?.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                     }
 
                     R.id.delete -> {
@@ -248,7 +241,7 @@ class CreateNoteFragment : Fragment() {
             pink.setOnClickListener {
                 onColorSelected(NoteModel.Color.Pink, this)
             }
-
+44
             saveColor.setOnClickListener {
                 alertDialog?.dismiss()
             }
@@ -270,6 +263,7 @@ class CreateNoteFragment : Fragment() {
     override fun onDestroy() {
         super.onDestroy()
         _binding = null
+
     }
 
 

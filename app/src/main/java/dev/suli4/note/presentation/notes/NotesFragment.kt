@@ -19,6 +19,7 @@ import androidx.core.view.isVisible
 import androidx.datastore.preferences.core.edit
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.clearFragmentResult
+import androidx.fragment.app.clearFragmentResultListener
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -153,6 +154,77 @@ class NotesFragment : Fragment() {
         adapter = NoteAdapter()
         adapter.setNoteListener(noteClickListener)
 
+        // init menu
+        addMenu()
+
+        binding.apply {
+            rvNotes.adapter = adapter
+            rvNotes.layoutManager = getLayoutManager()
+            rvNotes.setHasFixedSize(true)
+
+            // init selection tracker
+            initTracker()
+
+            savedInstanceState?.let {
+                tracker?.onRestoreInstanceState(it)
+            }
+
+            adapter.setTracker(tracker)
+            tracker?.addObserver(selectionObserver())
+
+            fabNewNote.setOnClickListener {
+                val action = NotesFragmentDirections.actionNotesFragmentToCreateNoteFragment()
+                findNavController().navigate(action)
+            }
+
+        }
+        setFragmentResultListener(REQUEST_KEY_EDIT_NOTE) { _, bundle: Bundle ->
+            val note = getNoteFromBundle(bundle)
+            val position = bundle.getInt(NOTE_POSITION)
+            if (note != null) {
+                viewModel.updateNote(note)
+                adapter.notifyItemChanged(position, note)
+            }
+        }
+
+        setFragmentResultListener(REQUEST_KEY_NEW_NOTE) { _, bundle: Bundle ->
+            val note = getNoteFromBundle(bundle)
+            if (note != null) {
+                viewModel.insertNote(note)
+                adapter.notes.add(note)
+                adapter.setNotes(adapter.notes)
+            }
+        }
+
+        setFragmentResultListener(REQUEST_KEY_DELETE_NOTE) { _, bundle: Bundle ->
+            val note = getNoteFromBundle(bundle)
+            if (note != null) {
+                viewModel.deleteNotes(note)
+            }
+        }
+
+        setSubTitle(selectedItemsState.value)
+
+        lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+
+                viewModel.loadNotes()
+
+                viewModel.state.collectLatest { state ->
+                    when (state) {
+                        is NoteViewModel.NotesState.GetAllNotes -> {
+                            binding.lottieAnimationEmptyNotes.isVisible = state.notes.isEmpty()
+                            adapter.setNotes(state.notes)
+                        }
+
+                        is NoteViewModel.NotesState.Loading -> {}
+                    }
+                }
+            }
+        }
+    }
+
+    private fun addMenu() {
         val menuHost: MenuHost = requireActivity()
 
         menuHost.addMenuProvider(object : MenuProvider {
@@ -209,81 +281,18 @@ class NotesFragment : Fragment() {
             }
 
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+    }
 
-        binding.apply {
-            rvNotes.adapter = adapter
-            rvNotes.layoutManager = getLayoutManager()
-            rvNotes.setHasFixedSize(true)
-
-            tracker = SelectionTracker.Builder(
-                SELECTION_NOTES_ID,
-                binding.rvNotes,
-                NotesKeyProvider(adapter),
-                NoteAdapter.ItemLookup(binding.rvNotes),
-                StorageStrategy.createLongStorage()
-            ).withSelectionPredicate(
-                SelectionPredicates.createSelectAnything()
-            ).build()
-
-            savedInstanceState?.let {
-                tracker?.onRestoreInstanceState(it)
-            }
-
-            adapter.setTracker(tracker)
-
-            tracker?.addObserver(selectionObserver())
-
-
-            fabNewNote.setOnClickListener {
-                val action = NotesFragmentDirections.actionNotesFragmentToCreateNoteFragment()
-                findNavController().navigate(action)
-            }
-
-        }
-
-        setFragmentResultListener(REQUEST_KEY_EDIT_NOTE) { _, bundle: Bundle ->
-            val note = getNoteFromBundle(bundle)
-            val position = bundle.getInt(NOTE_POSITION)
-            if (note != null) {
-                viewModel.updateNote(note)
-                adapter.notifyItemChanged(position, note)
-            }
-        }
-
-        setFragmentResultListener(REQUEST_KEY_NEW_NOTE) { _, bundle: Bundle ->
-            val note = getNoteFromBundle(bundle)
-            if (note != null) {
-                viewModel.insertNote(note)
-                adapter.notes.add(note)
-                adapter.setNotes(adapter.notes)
-            }
-        }
-
-        setFragmentResultListener(REQUEST_KEY_DELETE_NOTE) { _, bundle: Bundle ->
-            val note = getNoteFromBundle(bundle)
-            if (note != null) {
-                viewModel.deleteNotes(note)
-            }
-        }
-
-        setSubTitle(selectedItemsState.value)
-
-        lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-
-                viewModel.loadNotes()
-
-                viewModel.state.collectLatest { state ->
-                    when (state) {
-                        is NoteViewModel.NotesState.GetAllNotes -> {
-                            adapter.setNotes(state.notes)
-                        }
-
-                        is NoteViewModel.NotesState.Loading -> {}
-                    }
-                }
-            }
-        }
+    private fun initTracker() {
+        tracker = SelectionTracker.Builder(
+            SELECTION_NOTES_ID,
+            binding.rvNotes,
+            NotesKeyProvider(adapter),
+            NoteAdapter.ItemLookup(binding.rvNotes),
+            StorageStrategy.createLongStorage()
+        ).withSelectionPredicate(
+            SelectionPredicates.createSelectAnything()
+        ).build()
     }
 
     private fun animateChangeView() {
@@ -341,8 +350,8 @@ class NotesFragment : Fragment() {
 
         _binding = null
 
-        clearFragmentResult(REQUEST_KEY_NEW_NOTE)
-        clearFragmentResult(REQUEST_KEY_EDIT_NOTE)
+        clearFragmentResultListener(REQUEST_KEY_NEW_NOTE)
+        clearFragmentResultListener(REQUEST_KEY_EDIT_NOTE)
     }
 
     private fun getIconViewType(): Drawable? {

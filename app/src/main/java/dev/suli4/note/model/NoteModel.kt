@@ -1,6 +1,8 @@
 package dev.suli4.note.model
 
+import android.graphics.Bitmap
 import android.os.Parcelable
+import androidx.annotation.IdRes
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import kotlinx.parcelize.Parcelize
@@ -12,7 +14,7 @@ data class NoteModel(
     var title: String,
     var text: String,
     val createdAt: Long,
-    var color: Color
+    var color: Color,
 ): Parcelable {
 
     @Parcelize

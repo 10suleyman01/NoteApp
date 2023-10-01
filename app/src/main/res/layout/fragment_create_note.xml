@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
+
     <EditText
         android:id="@+id/etNoteTitle"
         android:layout_width="0dp"
@@ -24,18 +25,19 @@
 
     <EditText
         android:id="@+id/etNoteText"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
         android:background="@null"
         android:ems="10"
         android:gravity="top"
         android:hint="@string/tap_to_add_text"
-        android:padding="8dp"
         android:inputType="textMultiLine"
+        android:padding="8dp"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:scrollHorizontally="false"
         android:textColorHint="@color/et_text_color"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"

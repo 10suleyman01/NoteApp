@@ -16,6 +16,20 @@
         tools:listitem="@layout/note_item_linear"
         tools:spanCount="2" />
 
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/lottieAnimationEmptyNotes"
+        android:visibility="gone"
+        tools:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="false"
+        app:lottie_rawRes="@raw/empty_list_animation" />
+
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fabNewNote"
         android:layout_width="wrap_content"
