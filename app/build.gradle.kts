@@ -1,3 +1,5 @@
+import com.android.build.api.dsl.Packaging
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -11,6 +13,8 @@ plugins {
 android {
     namespace = "dev.suli4.note"
     compileSdk = 34
+
+
 
     defaultConfig {
         applicationId = "dev.suli4.note"
@@ -31,6 +35,11 @@ android {
             )
         }
     }
+
+    packaging {
+        resources.excludes.add("META-INF/DEPENDENCIES")
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -57,6 +66,7 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
 
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
 
     val lottieVersion = "6.1.0"
     implementation("com.airbnb.android:lottie:$lottieVersion")
@@ -69,7 +79,6 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.7.2")
 
     val room_version = "2.5.2"
-
     implementation("androidx.room:room-runtime:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
     ksp("androidx.room:room-compiler:$room_version")

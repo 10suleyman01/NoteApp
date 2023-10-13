@@ -6,6 +6,8 @@ import androidx.lifecycle.ViewModel
 import dev.suli4.note.model.NoteModel
 import dev.suli4.note.presentation.notes.NotesFragment
 import dev.suli4.note.presentation.notes.NotesFragment.Companion.NOTE_KEY
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class CreateNoteViewModel : ViewModel() {
 

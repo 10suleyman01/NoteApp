@@ -22,11 +22,10 @@ import dev.suli4.note.R
 import dev.suli4.note.databinding.ChooseColorViewBinding
 import dev.suli4.note.databinding.FragmentCreateNoteBinding
 import dev.suli4.note.ext.getDrawable
-import dev.suli4.note.ext.getModel
+import dev.suli4.note.ext.getParcelableModel
 import dev.suli4.note.ext.text
 import dev.suli4.note.model.NoteModel
 import dev.suli4.note.presentation.notes.NotesFragment.Companion.NOTE_KEY
-import dev.suli4.note.presentation.notes.NotesFragment.Companion.NOTE_POSITION
 import dev.suli4.note.presentation.notes.NotesFragment.Companion.REQUEST_KEY_DELETE_NOTE
 import dev.suli4.note.presentation.notes.NotesFragment.Companion.REQUEST_KEY_EDIT_NOTE
 import dev.suli4.note.presentation.notes.NotesFragment.Companion.REQUEST_KEY_NEW_NOTE
@@ -53,7 +52,6 @@ class CreateNoteFragment : Fragment() {
 
     companion object {
         const val COLOR_STATE = "color_state"
-        const val URI_STATE = "uri_state"
         const val SHOW_COLOR_VIEW = "show_color_view"
     }
 
@@ -62,7 +60,7 @@ class CreateNoteFragment : Fragment() {
         note = args?.note
 
         if (savedInstanceState != null) {
-            colorState.value = savedInstanceState.getModel(COLOR_STATE, NoteModel.Color::class.java)
+            colorState.value = savedInstanceState.getParcelableModel(COLOR_STATE, NoteModel.Color::class.java)
                 ?: colorState.value
 
             if (savedInstanceState.getBoolean(SHOW_COLOR_VIEW)) {
@@ -241,7 +239,7 @@ class CreateNoteFragment : Fragment() {
             pink.setOnClickListener {
                 onColorSelected(NoteModel.Color.Pink, this)
             }
-44
+
             saveColor.setOnClickListener {
                 alertDialog?.dismiss()
             }

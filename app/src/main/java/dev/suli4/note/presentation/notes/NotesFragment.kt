@@ -18,7 +18,6 @@ import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.datastore.preferences.core.edit
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.clearFragmentResult
 import androidx.fragment.app.clearFragmentResultListener
 import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
@@ -29,7 +28,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.selection.SelectionPredicates
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
-import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import dev.suli4.note.R
@@ -37,15 +35,16 @@ import dev.suli4.note.databinding.FragmentNotesBinding
 import dev.suli4.note.ext.PreferencesKeys
 import dev.suli4.note.ext.dataStore
 import dev.suli4.note.ext.getDrawable
-import dev.suli4.note.ext.getModel
+import dev.suli4.note.ext.getParcelableModel
 import dev.suli4.note.model.NoteModel
 import dev.suli4.note.presentation.MainActivity
 import dev.suli4.note.presentation.notes.adapter.NoteAdapter
 import dev.suli4.note.presentation.notes.adapter.NoteClickListener
+import dev.suli4.note.presentation.notes.adapter.NoteSelectionPredicate
 import dev.suli4.note.presentation.notes.adapter.NotesKeyProvider
 import dev.suli4.note.viewmodel.NoteViewModel
+import dev.suli4.note.viewmodel.NoteViewModel.Companion.GRID_VIEW
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -65,25 +64,12 @@ class NotesFragment : Fragment() {
         const val NOTE_KEY = "note"
         const val NOTE_POSITION = "position"
 
-        const val SELECTED_ITEMS_SAVE_STATE = "selected_items"
-        const val DELETE_ACTION_SAVE_STATE = "delete_action"
-        const val SEARCH_QUERY_TEXT_STATE = "search_state"
-
         const val SELECTION_NOTES_ID = "selection-notes"
 
-        const val GRID_VIEW = false
     }
 
     private val viewModel: NoteViewModel by viewModels()
     private lateinit var adapter: NoteAdapter
-
-    private var tracker: SelectionTracker<Long>? = null
-    private val shouldToDeleteItems: MutableList<NoteModel> = mutableListOf()
-
-    private val viewTypeState: MutableStateFlow<Boolean> = MutableStateFlow(GRID_VIEW)
-    private val searchQueryState: MutableStateFlow<String> = MutableStateFlow("")
-    private val selectedItemsState: MutableStateFlow<String> = MutableStateFlow("")
-    private val deleteActionIsVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
 
     private var menuDeleteItem: MenuItem? = null
 
@@ -91,26 +77,19 @@ class NotesFragment : Fragment() {
         super.onCreate(savedInstanceState)
 
         lifecycleScope.launch(Dispatchers.IO) {
-            viewTypeState.value = context?.dataStore!!.data.map { preferences ->
+            viewModel.setViewTypeState(context?.dataStore!!.data.map { preferences ->
                 preferences[PreferencesKeys.ViewTypeSettings]
-            }.first() ?: GRID_VIEW
+            }.first() ?: false)
         }
-
-        selectedItemsState.value = savedInstanceState?.getString(SELECTED_ITEMS_SAVE_STATE) ?: ""
-        deleteActionIsVisible.value =
-            savedInstanceState?.getBoolean(DELETE_ACTION_SAVE_STATE) ?: false
-        searchQueryState.value = savedInstanceState?.getString(SEARCH_QUERY_TEXT_STATE) ?: ""
 
         requireActivity().onBackPressedDispatcher.addCallback(
             this,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    tracker?.let {
-                        if (it.hasSelection()) {
-                            it.clearSelection()
-                        } else {
-                            requireActivity().finish()
-                        }
+                    if (viewModel.hasSelection()) {
+                        viewModel.clearSelection()
+                    } else {
+                        requireActivity().finish()
                     }
                 }
             })
@@ -119,16 +98,12 @@ class NotesFragment : Fragment() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        tracker?.onSaveInstanceState(outState)
-
-        outState.putString(SELECTED_ITEMS_SAVE_STATE, selectedItemsState.value)
-        outState.putString(SEARCH_QUERY_TEXT_STATE, searchQueryState.value)
-        outState.putBoolean(DELETE_ACTION_SAVE_STATE, deleteActionIsVisible.value)
+        viewModel.trackerState.value?.onSaveInstanceState(outState)
     }
 
     override fun onViewStateRestored(savedInstanceState: Bundle?) {
         super.onViewStateRestored(savedInstanceState)
-        tracker?.onRestoreInstanceState(savedInstanceState)
+        viewModel.trackerState.value?.onRestoreInstanceState(savedInstanceState)
     }
 
     override fun onCreateView(
@@ -151,7 +126,7 @@ class NotesFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = NoteAdapter()
+        adapter = NoteAdapter(viewModel)
         adapter.setNoteListener(noteClickListener)
 
         // init menu
@@ -165,12 +140,7 @@ class NotesFragment : Fragment() {
             // init selection tracker
             initTracker()
 
-            savedInstanceState?.let {
-                tracker?.onRestoreInstanceState(it)
-            }
-
-            adapter.setTracker(tracker)
-            tracker?.addObserver(selectionObserver())
+            viewModel.trackerState.value?.addObserver(selectionObserver())
 
             fabNewNote.setOnClickListener {
                 val action = NotesFragmentDirections.actionNotesFragmentToCreateNoteFragment()
@@ -203,7 +173,7 @@ class NotesFragment : Fragment() {
             }
         }
 
-        setSubTitle(selectedItemsState.value)
+        setSubTitle(viewModel.selectedItemsState.value)
 
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -233,16 +203,17 @@ class NotesFragment : Fragment() {
                 menu.findItem(R.id.viewType).icon = getIconViewType()
 
                 menuDeleteItem = menu.findItem(R.id.delete)
-                menuDeleteItem?.isVisible = deleteActionIsVisible.value
+                menuDeleteItem?.isVisible = viewModel.deleteActionIsVisible.value
 
                 val searchItem = menu.findItem(R.id.search)
                 val searchView = searchItem.actionView as SearchView
+                val searchQueryState = viewModel.searchQueryState.value
 
-                if (searchQueryState.value.isNotEmpty()) {
+                if (searchQueryState.isNotEmpty()) {
                     searchItem.expandActionView()
-                    searchView.setQuery(searchQueryState.value, true)
+                    searchView.setQuery(searchQueryState, true)
                     searchView.clearFocus()
-                    viewModel.searchItems(searchQueryState.value)
+                    viewModel.searchItems(searchQueryState)
                 }
 
                 searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -252,7 +223,7 @@ class NotesFragment : Fragment() {
                     }
 
                     override fun onQueryTextChange(newText: String?): Boolean {
-                        searchQueryState.value = newText ?: ""
+                        viewModel.setQueryState(newText ?: "")
                         viewModel.searchItems(newText)
                         return false
                     }
@@ -262,9 +233,11 @@ class NotesFragment : Fragment() {
             override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
                 when (menuItem.itemId) {
                     R.id.viewType -> {
-                        viewTypeState.value = !viewTypeState.value
+                        viewModel.setViewTypeState(
+                            !viewModel.viewTypeState.value
+                        )
                         lifecycleScope.launch {
-                            updateView(viewTypeState.value)
+                            updateView(viewModel.viewTypeState.value)
                         }
                         menuItem.icon = getIconViewType()
                         binding.rvNotes.layoutManager = getLayoutManager()
@@ -273,8 +246,8 @@ class NotesFragment : Fragment() {
                     }
 
                     R.id.delete -> {
-                        viewModel.deleteNotes(*shouldToDeleteItems.toTypedArray())
-                        tracker?.clearSelection()
+                        viewModel.deleteNotes(*viewModel.shouldToDeleteItems.value.toTypedArray())
+                        viewModel.clearSelection()
                     }
                 }
                 return true
@@ -284,15 +257,17 @@ class NotesFragment : Fragment() {
     }
 
     private fun initTracker() {
-        tracker = SelectionTracker.Builder(
-            SELECTION_NOTES_ID,
-            binding.rvNotes,
-            NotesKeyProvider(adapter),
-            NoteAdapter.ItemLookup(binding.rvNotes),
-            StorageStrategy.createLongStorage()
-        ).withSelectionPredicate(
-            SelectionPredicates.createSelectAnything()
-        ).build()
+        viewModel.setTracker(
+            SelectionTracker.Builder(
+                SELECTION_NOTES_ID,
+                binding.rvNotes,
+                NotesKeyProvider(adapter),
+                NoteAdapter.ItemLookup(binding.rvNotes),
+                StorageStrategy.createParcelableStorage(NoteModel::class.java)
+            ).withSelectionPredicate(
+               NoteSelectionPredicate(adapter)
+            ).build()
+        )
     }
 
     private fun animateChangeView() {
@@ -302,34 +277,34 @@ class NotesFragment : Fragment() {
         binding.rvNotes.startAnimation(fadeIn)
     }
 
-    private fun selectionObserver() =
-        object : SelectionTracker.SelectionObserver<Long>() {
+    private fun selectionObserver(): SelectionTracker.SelectionObserver<NoteModel> =
+        object : SelectionTracker.SelectionObserver<NoteModel>() {
 
-            override fun onItemStateChanged(key: Long, selected: Boolean) {
+            override fun onItemStateChanged(key: NoteModel, selected: Boolean) {
                 super.onItemStateChanged(key, selected)
 
                 if (selected) {
-                    adapter.notes.find { it.id == key }?.let { shouldToDeleteItems.add(it) }
+                    viewModel.addItem(key)
                 } else {
-                    shouldToDeleteItems.remove(adapter.notes.find { it.id == key })
+                    viewModel.removeItem(key)
                 }
 
             }
 
             override fun onSelectionChanged() {
-                val notes: Int? = tracker?.selection?.size()
+                val notes: Int? = viewModel.trackerState.value?.selection?.size()
                 notes?.let { size ->
                     if (size > 0) {
-                        selectedItemsState.value = "Выбрано: $size"
-                        deleteActionIsVisible.value = true
+                        viewModel.setItemsSelected("Выбрано: $size")
+                        viewModel.setShowDeleteAction(true)
                         binding.fabNewNote.isVisible = false
                     } else {
-                        selectedItemsState.value = ""
-                        deleteActionIsVisible.value = false
+                        viewModel.setItemsSelected()
+                        viewModel.setShowDeleteAction(false)
                         binding.fabNewNote.isVisible = true
                     }
-                    menuDeleteItem?.isVisible = deleteActionIsVisible.value
-                    setSubTitle(selectedItemsState.value)
+                    menuDeleteItem?.isVisible = viewModel.deleteActionIsVisible.value
+                    setSubTitle(viewModel.selectedItemsState.value)
                 }
             }
         }
@@ -342,7 +317,7 @@ class NotesFragment : Fragment() {
     }
 
     private fun getNoteFromBundle(bundle: Bundle): NoteModel? {
-        return bundle.getModel(NOTE_KEY, NoteModel::class.java)
+        return bundle.getParcelableModel(NOTE_KEY, NoteModel::class.java)
     }
 
     override fun onDestroy() {
@@ -356,7 +331,7 @@ class NotesFragment : Fragment() {
 
     private fun getIconViewType(): Drawable? {
         // if current type is GRID then icon to list type
-        if (!viewTypeState.value) return getDrawable(R.drawable.baseline_view_list_24)
+        if (!viewModel.viewTypeState.value) return getDrawable(R.drawable.baseline_view_list_24)
 
         return getDrawable(
             R.drawable.baseline_grid_view_24
@@ -376,8 +351,9 @@ class NotesFragment : Fragment() {
         return lm
     }
 
-    private fun getLayoutManager(): RecyclerView.LayoutManager {
-        if (viewTypeState.value == GRID_VIEW) return getStaggeredLayoutManager(false)
-        return getStaggeredLayoutManager(true)
+
+    private fun getLayoutManager(): StaggeredGridLayoutManager {
+        if (viewModel.viewTypeState.value == GRID_VIEW) return getStaggeredLayoutManager(GRID_VIEW)
+        return getStaggeredLayoutManager(!GRID_VIEW)
     }
 }

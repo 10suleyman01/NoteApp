@@ -6,21 +6,19 @@ import android.view.MotionEvent
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.recyclerview.selection.ItemDetailsLookup
-import androidx.recyclerview.selection.SelectionTracker
+import androidx.recyclerview.selection.ItemDetailsLookup.ItemDetails
+import androidx.recyclerview.widget.AsyncDifferConfig
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
-import com.bumptech.glide.load.resource.bitmap.CenterInside
-import com.bumptech.glide.load.resource.bitmap.CircleCrop
-import com.bumptech.glide.load.resource.bitmap.FitCenter
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners
-import com.bumptech.glide.request.RequestOptions
 import dev.suli4.note.databinding.NoteItemLinearBinding
 import dev.suli4.note.ext.getTimeFormatted
 import dev.suli4.note.model.NoteModel
+import dev.suli4.note.viewmodel.NoteViewModel
 
-class NoteAdapter : RecyclerView.Adapter<NoteAdapter.NoteViewHolder>() {
+
+class NoteAdapter(
+    val viewModel: NoteViewModel
+) : RecyclerView.Adapter<NoteAdapter.NoteViewHolder>() {
 
     init {
         setHasStableIds(true)
@@ -28,11 +26,6 @@ class NoteAdapter : RecyclerView.Adapter<NoteAdapter.NoteViewHolder>() {
 
     val notes: MutableList<NoteModel> = mutableListOf()
     private var listener: NoteClickListener? = null
-
-    private var tracker: SelectionTracker<Long>? = null
-    fun setTracker(tracker: SelectionTracker<Long>?) {
-        this.tracker = tracker
-    }
 
     fun setNotes(newNotes: List<NoteModel>) {
         val diffCallback = NoteAdapterDiffUtil(notes, newNotes)
@@ -53,7 +46,11 @@ class NoteAdapter : RecyclerView.Adapter<NoteAdapter.NoteViewHolder>() {
 
     override fun getItemCount() = notes.size
 
-    override fun getItemId(position: Int) = position.toLong()
+    override fun getItemId(position: Int) = notes[position].id
+
+    fun getNote(position: Int) = notes[position]
+
+    fun getPosition(noteId: Long) = notes.indexOfFirst { it.id == noteId }
 
     override fun onBindViewHolder(holder: NoteViewHolder, position: Int) {
         val note = notes[position]
@@ -65,8 +62,8 @@ class NoteAdapter : RecyclerView.Adapter<NoteAdapter.NoteViewHolder>() {
         }
     }
 
-    class ItemLookup(private val rv: RecyclerView) : ItemDetailsLookup<Long>() {
-        override fun getItemDetails(event: MotionEvent): ItemDetails<Long>? {
+    class ItemLookup(private val rv: RecyclerView) : ItemDetailsLookup<NoteModel>() {
+        override fun getItemDetails(event: MotionEvent): ItemDetails<NoteModel>? {
             val view = rv.findChildViewUnder(event.x, event.y)
             if (view != null) {
                 return (rv.getChildViewHolder(view) as NoteViewHolder)
@@ -106,24 +103,21 @@ class NoteAdapter : RecyclerView.Adapter<NoteAdapter.NoteViewHolder>() {
                 val color = note.color.value
                 setCardBackgroundColor(color)
 
-                tracker?.let {
-                    checked.isVisible = it.isSelected(note.id)
-                }
+                checked.isVisible = viewModel.trackerState.value?.isSelected(note) ?: false
+
             }
         }
-
 
         private fun setCardBackgroundColor(color: String) {
             itemNoteItemBinding.root.setCardBackgroundColor(Color.parseColor(color))
         }
 
-        fun getItemDetails(): ItemDetailsLookup.ItemDetails<Long> =
-            object : ItemDetailsLookup.ItemDetails<Long>() {
+        fun getItemDetails(): ItemDetails<NoteModel> {
+            return object : ItemDetails<NoteModel>() {
                 override fun getPosition(): Int = adapterPosition
-                override fun getSelectionKey(): Long = notes[position].id
+                override fun getSelectionKey(): NoteModel = notes[position]
             }
-
-
+        }
     }
 
 }

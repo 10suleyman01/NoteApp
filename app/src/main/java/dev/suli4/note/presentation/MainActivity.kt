@@ -1,14 +1,9 @@
 package dev.suli4.note.presentation
 
 import android.os.Bundle
-import android.util.Log
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import dev.suli4.note.databinding.ActivityMainBinding
-import dev.suli4.note.presentation.create_note.CreateNoteFragment
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
