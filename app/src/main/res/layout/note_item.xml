@@ -17,8 +17,8 @@
         android:orientation="horizontal">
 
         <View
-            android:id="@+id/colorIndicator"
-            android:layout_width="8dp"
+            android:id="@+id/view"
+            android:layout_width="6dp"
             android:layout_height="fill_parent"
             android:background="@color/red"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -67,7 +67,6 @@
                 android:gravity="start"
                 android:maxHeight="200dp"
                 android:maxLength="150"
-                android:maxLines="10"
                 android:textColor="@color/black"
                 android:textSize="12sp"
                 app:layout_constraintStart_toStartOf="parent"

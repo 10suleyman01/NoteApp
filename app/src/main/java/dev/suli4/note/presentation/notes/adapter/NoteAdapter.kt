@@ -7,11 +7,10 @@ import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.recyclerview.selection.ItemDetailsLookup
 import androidx.recyclerview.selection.ItemDetailsLookup.ItemDetails
-import androidx.recyclerview.widget.AsyncDifferConfig
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import dev.suli4.note.databinding.NoteItemLinearBinding
-import dev.suli4.note.ext.getTimeFormatted
+import dev.suli4.note.ext.formatTime
 import dev.suli4.note.model.NoteModel
 import dev.suli4.note.viewmodel.NoteViewModel
 
@@ -79,17 +78,17 @@ class NoteAdapter(
 
         fun bind(note: NoteModel) {
             itemNoteItemBinding.apply {
-                if (note.color == NoteModel.Color.White ||
-                    note.color == NoteModel.Color.Yellow
-                ) {
-                    tvTitle.setTextColor(Color.BLACK)
-                    tvText.setTextColor(Color.BLACK)
-                    tvCreatedAt.setTextColor(Color.BLACK)
-                } else {
-                    tvTitle.setTextColor(Color.WHITE)
-                    tvText.setTextColor(Color.WHITE)
-                    tvCreatedAt.setTextColor(Color.WHITE)
-                }
+//                if (note.color == NoteModel.Color.White ||
+//                    note.color == NoteModel.Color.Yellow
+//                ) {
+//                    tvTitle.setTextColor(Color.BLACK)
+//                    tvText.setTextColor(Color.BLACK)
+//                    tvCreatedAt.setTextColor(Color.BLACK)
+//                } else {
+//                    tvTitle.setTextColor(Color.WHITE)
+//                    tvText.setTextColor(Color.WHITE)
+//                    tvCreatedAt.setTextColor(Color.WHITE)
+//                }
 
                 if (note.title.isEmpty()) {
                     tvTitle.isVisible = false
@@ -99,7 +98,7 @@ class NoteAdapter(
                 }
 
                 tvText.text = note.text
-                tvCreatedAt.text = getTimeFormatted(note.createdAt)
+                tvCreatedAt.text = formatTime(note.createdAt)
                 val color = note.color.value
                 setCardBackgroundColor(color)
 
@@ -109,7 +108,7 @@ class NoteAdapter(
         }
 
         private fun setCardBackgroundColor(color: String) {
-            itemNoteItemBinding.root.setCardBackgroundColor(Color.parseColor(color))
+            itemNoteItemBinding.colorIndicator.setBackgroundColor(Color.parseColor(color))
         }
 
         fun getItemDetails(): ItemDetails<NoteModel> {

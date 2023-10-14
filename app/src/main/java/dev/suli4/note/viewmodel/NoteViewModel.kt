@@ -28,6 +28,16 @@ class NoteViewModel @Inject constructor(
         MutableStateFlow(null)
     val trackerState = _trackerState.asStateFlow()
 
+    var currentColorState: MutableStateFlow<NoteModel.Color> =
+        MutableStateFlow(NoteModel.Color.Red)
+
+    fun getCurrentColor(): String {
+        return currentColorState.value.value
+    }
+
+    fun setCurrentColor(color: NoteModel.Color) {
+        currentColorState.value = color
+    }
 
     fun setTracker(selectionTracker: SelectionTracker<NoteModel>) {
 
@@ -83,6 +93,9 @@ class NoteViewModel @Inject constructor(
 
     fun loadNotes() = launch {
         allNotesUseCase.getAllNotesUseCase.invoke().collectLatest { notes ->
+            repeat(notes.size) {
+
+            }
             _state.value = NotesState.GetAllNotes(notes.sortedByDescending { it.createdAt })
         }
         _state.value = NotesState.Loading(false)

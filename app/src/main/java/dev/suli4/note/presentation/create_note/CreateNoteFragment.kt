@@ -8,12 +8,11 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
-import androidx.core.os.bundleOf
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.setFragmentResult
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -21,15 +20,13 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.suli4.note.R
 import dev.suli4.note.databinding.ChooseColorViewBinding
 import dev.suli4.note.databinding.FragmentCreateNoteBinding
+import dev.suli4.note.ext.formatTime
+import dev.suli4.note.ext.getColoredIcon
 import dev.suli4.note.ext.getDrawable
-import dev.suli4.note.ext.getParcelableModel
 import dev.suli4.note.ext.text
 import dev.suli4.note.model.NoteModel
-import dev.suli4.note.presentation.notes.NotesFragment.Companion.NOTE_KEY
-import dev.suli4.note.presentation.notes.NotesFragment.Companion.REQUEST_KEY_DELETE_NOTE
-import dev.suli4.note.presentation.notes.NotesFragment.Companion.REQUEST_KEY_EDIT_NOTE
-import dev.suli4.note.presentation.notes.NotesFragment.Companion.REQUEST_KEY_NEW_NOTE
-import kotlinx.coroutines.flow.MutableStateFlow
+import dev.suli4.note.viewmodel.NoteViewModel
+
 
 @AndroidEntryPoint
 class CreateNoteFragment : Fragment() {
@@ -43,30 +40,17 @@ class CreateNoteFragment : Fragment() {
     private val args: CreateNoteFragmentArgs? by navArgs()
     private var note: NoteModel? = null
 
-    private val viewModel: CreateNoteViewModel by viewModels()
-
-    private val colorState: MutableStateFlow<NoteModel.Color?> =
-        MutableStateFlow(null)
+    private val noteViewModel: NoteViewModel by activityViewModels()
 
     private var alertDialog: AlertDialog? = null
-
-    companion object {
-        const val COLOR_STATE = "color_state"
-        const val SHOW_COLOR_VIEW = "show_color_view"
-    }
+    private var menuItem: MenuItem? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         note = args?.note
 
-        if (savedInstanceState != null) {
-            colorState.value = savedInstanceState.getParcelableModel(COLOR_STATE, NoteModel.Color::class.java)
-                ?: colorState.value
-
-            if (savedInstanceState.getBoolean(SHOW_COLOR_VIEW)) {
-                getChooseColorDialog().show()
-                setCurrentColor()
-            }
+        note?.let {
+            noteViewModel.setCurrentColor(it.color)
         }
     }
 
@@ -79,31 +63,21 @@ class CreateNoteFragment : Fragment() {
         return binding.root
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putParcelable(COLOR_STATE, colorState.value)
-        outState.putBoolean(SHOW_COLOR_VIEW, alertDialog?.isShowing ?: false)
-    }
-
-    override fun onViewStateRestored(savedInstanceState: Bundle?) {
-        super.onViewStateRestored(savedInstanceState)
-
-        if (savedInstanceState != null) {
-            if (savedInstanceState.getBoolean(SHOW_COLOR_VIEW)) {
-                getChooseColorDialog().show()
-                setCurrentColor()
-            }
-        }
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         binding.apply {
 
-            if (note != null) {
-                etNoteTitle.setText(note?.title)
-                etNoteText.setText(note?.text)
+            note?.let { model ->
+                etNoteTitle.setText(model.title)
+                etNoteText.setText(model.text)
+                if (model.lastEdited > 0) {
+                    val editedTimeText = "Изменено: ${formatTime(model.lastEdited)}"
+                    tvLastEdited.text = editedTimeText
+                } else {
+                    tvLastEdited.isVisible = false
+                }
             }
 
             fabSaveNote.setOnClickListener {
@@ -111,32 +85,29 @@ class CreateNoteFragment : Fragment() {
                 val title = etNoteTitle.text().trim()
                 val text = etNoteText.text().trim()
 
-                if (text.isNotEmpty()) {
-                    if (note != null) {
-                        viewModel.editNote(
-                            args?.position,
-                            note?.copy(
+                if (note != null) {
+                    note?.let {
+                        noteViewModel.updateNote(
+                            it.copy(
                                 title = title,
                                 text = text,
-                                color = colorState.value ?: note?.color ?: NoteModel.Color.Red
+                                color = noteViewModel.currentColorState.value,
+                                lastEdited = System.currentTimeMillis(),
                             )
-                        ) { note ->
-                            setFragmentResult(REQUEST_KEY_EDIT_NOTE, note)
-                        }
-                    } else {
-                        viewModel.createNote(
+                        )
+                    }
+                } else {
+                    noteViewModel.insertNote(
+                        NoteModel(
                             title = title,
                             text = text,
                             createdAt = System.currentTimeMillis(),
-                            color = colorState.value ?: NoteModel.Color.Red,
-                        ) { note ->
-                            setFragmentResult(REQUEST_KEY_NEW_NOTE, note)
-                        }
-                    }
-                    findNavController().popBackStack()
-                } else {
-                    etNoteText.error = getString(R.string.field_cannot_be_empty)
+                            lastEdited = System.currentTimeMillis(),
+                            color = noteViewModel.currentColorState.value,
+                        )
+                    )
                 }
+                findNavController().popBackStack()
             }
         }
 
@@ -144,6 +115,12 @@ class CreateNoteFragment : Fragment() {
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.menu_create_note, menu)
+
+                menuItem = menu.findItem(R.id.chooseColor)
+                menuItem?.icon = getColoredIcon(
+                    R.drawable.baseline_color_lens_24,
+                    noteViewModel.getCurrentColor()
+                )
 
                 val menuItemDelete = menu.findItem(R.id.delete)
                 if (note != null) {
@@ -161,7 +138,9 @@ class CreateNoteFragment : Fragment() {
                     }
 
                     R.id.delete -> {
-                        setFragmentResult(REQUEST_KEY_DELETE_NOTE, bundleOf(NOTE_KEY to note))
+                        note?.let {
+                            noteViewModel.deleteNotes(it)
+                        }
                         findNavController().popBackStack()
                     }
 
@@ -173,47 +152,9 @@ class CreateNoteFragment : Fragment() {
             }
 
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
     }
 
-    private fun setCurrentColor() {
-        if (colorState.value != null) {
-            colorState.value?.let { state ->
-                onColorSelected(state, bindingChooseColor)
-            }
-        } else {
-            note?.let {
-                onColorSelected(it.color, bindingChooseColor)
-            }
-        }
-    }
-
-    private fun onColorSelected(color: NoteModel.Color, binding: ChooseColorViewBinding) {
-        unselectOther(binding)
-        colorState.value = color
-        when (color) {
-            NoteModel.Color.Red -> {
-                binding.red.background = getDrawable(R.drawable.color_shape_red_selected)
-            }
-
-            NoteModel.Color.Orange -> {
-                binding.orange.background = getDrawable(R.drawable.color_shape_orange_selected)
-            }
-
-            NoteModel.Color.Yellow -> {
-                binding.yellow.background = getDrawable(R.drawable.color_shape_yellow_selected)
-            }
-
-            NoteModel.Color.Cyan -> {
-                binding.cyan.background = getDrawable(R.drawable.color_shape_cyan_selected)
-            }
-
-            NoteModel.Color.Pink -> {
-                binding.pink.background = getDrawable(R.drawable.color_shape_pink_selected)
-            }
-
-            else -> {}
-        }
-    }
 
     private fun getChooseColorDialog(): AlertDialog {
         val showChooseColorDialog = AlertDialog.Builder(requireContext())
@@ -221,32 +162,72 @@ class CreateNoteFragment : Fragment() {
         _bindingChooseColor = ChooseColorViewBinding.inflate(requireActivity().layoutInflater)
         showChooseColorDialog.setView(bindingChooseColor.root)
 
-        setCurrentColor()
+        selectedColor(noteViewModel.currentColorState.value, bindingChooseColor)
 
         bindingChooseColor.apply {
-            red.setOnClickListener {
-                onColorSelected(NoteModel.Color.Red, this)
-            }
-            orange.setOnClickListener {
-                onColorSelected(NoteModel.Color.Orange, this)
-            }
-            yellow.setOnClickListener {
-                onColorSelected(NoteModel.Color.Yellow, this)
-            }
-            cyan.setOnClickListener {
-                onColorSelected(NoteModel.Color.Cyan, this)
-            }
-            pink.setOnClickListener {
-                onColorSelected(NoteModel.Color.Pink, this)
+            val colorButtons = mapOf(
+                red to NoteModel.Color.Red,
+                orange to NoteModel.Color.Orange,
+                yellow to NoteModel.Color.Yellow,
+                cyan to NoteModel.Color.Cyan,
+                pink to NoteModel.Color.Pink,
+            )
+
+            colorButtons.forEach { (button, color) ->
+                button.setOnClickListener {
+                    selectedColor(color, this)
+                }
             }
 
             saveColor.setOnClickListener {
                 alertDialog?.dismiss()
+                _bindingChooseColor = null
             }
         }
 
         return showChooseColorDialog.create()
     }
+
+    private fun selectedColor(
+        color: NoteModel.Color,
+        binding: ChooseColorViewBinding
+    ) {
+        unselectOther(binding)
+
+        val selectedColorButton = when (color) {
+            NoteModel.Color.Red -> binding.red
+            NoteModel.Color.Orange -> binding.orange
+            NoteModel.Color.Yellow -> binding.yellow
+            NoteModel.Color.Cyan -> binding.cyan
+            NoteModel.Color.Pink -> binding.pink
+            else -> binding.red
+        }
+
+        menuItem?.icon = getColoredIcon(R.drawable.baseline_color_lens_24, color.value)
+        noteViewModel.setCurrentColor(color)
+
+        note?.let {
+            noteViewModel.updateNote(
+                it.copy(
+                    color = color
+                )
+            )
+        }
+
+        selectedColorButton.background = getDrawable(getSelectedColorDrawableId(color))
+    }
+
+    private fun getSelectedColorDrawableId(color: NoteModel.Color): Int {
+        return when (color) {
+            NoteModel.Color.Red -> R.drawable.color_shape_red_selected
+            NoteModel.Color.Orange -> R.drawable.color_shape_orange_selected
+            NoteModel.Color.Yellow -> R.drawable.color_shape_yellow_selected
+            NoteModel.Color.Cyan -> R.drawable.color_shape_cyan_selected
+            NoteModel.Color.Pink -> R.drawable.color_shape_pink_selected
+            else -> R.drawable.color_shape_red_selected
+        }
+    }
+
 
     private fun unselectOther(binding: ChooseColorViewBinding) {
         binding.apply {
@@ -261,6 +242,7 @@ class CreateNoteFragment : Fragment() {
     override fun onDestroy() {
         super.onDestroy()
         _binding = null
+        _bindingChooseColor = null
 
     }
 

@@ -1,5 +1,6 @@
 package dev.suli4.note.ext
 
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
@@ -19,27 +20,32 @@ fun Fragment.getDrawable(id: Int): Drawable? {
     return ContextCompat.getDrawable(requireContext(), id)
 }
 
-fun getTimeFormatted(time: Long): String {
-
-    val dateFormatTime = SimpleDateFormat("HH:mm", Locale.getDefault())
-    val dateFormatDate = SimpleDateFormat("mm.dd", Locale.getDefault())
+fun formatTime(timeMillis: Long): String {
+    val currentTimeMillis = System.currentTimeMillis()
+    val differenceMillis = currentTimeMillis - timeMillis
 
     val calendar = Calendar.getInstance()
-    calendar.timeInMillis = time
+    calendar.timeInMillis = timeMillis
 
-    val day = calendar.get(Calendar.DAY_OF_MONTH)
-
-    val calCurrent = Calendar.getInstance()
-    calCurrent.timeInMillis = System.currentTimeMillis()
-    val currentDay = calCurrent.get(Calendar.DAY_OF_MONTH)
-
-    if (day == currentDay) {
-        return dateFormatTime.format(time).toString()
-    } else if (day < currentDay) {
-        return "Вчера"
+    return when {
+        differenceMillis < 24 * 60 * 60 * 1000 -> "сегодня"
+        differenceMillis < 2 * 24 * 60 * 60 * 1000 -> "вчера"
+        else -> {
+            val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
+            sdf.format(calendar.time)
+        }
     }
+}
 
-    return dateFormatDate.format(time)
+fun Fragment.getColoredIcon(icon: Int, hexColor: String): Drawable? {
+    val drawable = ContextCompat.getDrawable(
+        requireContext(),
+        icon
+    )
+
+    drawable?.setTint(Color.parseColor(hexColor))
+
+    return drawable
 }
 
 fun EditText.text(): String {

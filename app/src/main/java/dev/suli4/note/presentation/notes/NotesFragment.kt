@@ -2,6 +2,7 @@ package dev.suli4.note.presentation.notes
 
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -18,14 +19,11 @@ import androidx.core.view.MenuProvider
 import androidx.core.view.isVisible
 import androidx.datastore.preferences.core.edit
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.clearFragmentResultListener
-import androidx.fragment.app.setFragmentResultListener
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.selection.SelectionPredicates
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
@@ -35,7 +33,6 @@ import dev.suli4.note.databinding.FragmentNotesBinding
 import dev.suli4.note.ext.PreferencesKeys
 import dev.suli4.note.ext.dataStore
 import dev.suli4.note.ext.getDrawable
-import dev.suli4.note.ext.getParcelableModel
 import dev.suli4.note.model.NoteModel
 import dev.suli4.note.presentation.MainActivity
 import dev.suli4.note.presentation.notes.adapter.NoteAdapter
@@ -50,7 +47,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
-
 @AndroidEntryPoint
 class NotesFragment : Fragment() {
 
@@ -58,17 +54,11 @@ class NotesFragment : Fragment() {
     private val binding get() = _binding!!
 
     companion object {
-        const val REQUEST_KEY_NEW_NOTE = "new_note"
-        const val REQUEST_KEY_EDIT_NOTE = "edit_note"
-        const val REQUEST_KEY_DELETE_NOTE = "delete_note"
-        const val NOTE_KEY = "note"
-        const val NOTE_POSITION = "position"
-
         const val SELECTION_NOTES_ID = "selection-notes"
 
     }
 
-    private val viewModel: NoteViewModel by viewModels()
+    private val viewModel: NoteViewModel by activityViewModels()
     private lateinit var adapter: NoteAdapter
 
     private var menuDeleteItem: MenuItem? = null
@@ -82,8 +72,7 @@ class NotesFragment : Fragment() {
             }.first() ?: false)
         }
 
-        requireActivity().onBackPressedDispatcher.addCallback(
-            this,
+        requireActivity().onBackPressedDispatcher.addCallback(this,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
                     if (viewModel.hasSelection()) {
@@ -148,35 +137,11 @@ class NotesFragment : Fragment() {
             }
 
         }
-        setFragmentResultListener(REQUEST_KEY_EDIT_NOTE) { _, bundle: Bundle ->
-            val note = getNoteFromBundle(bundle)
-            val position = bundle.getInt(NOTE_POSITION)
-            if (note != null) {
-                viewModel.updateNote(note)
-                adapter.notifyItemChanged(position, note)
-            }
-        }
-
-        setFragmentResultListener(REQUEST_KEY_NEW_NOTE) { _, bundle: Bundle ->
-            val note = getNoteFromBundle(bundle)
-            if (note != null) {
-                viewModel.insertNote(note)
-                adapter.notes.add(note)
-                adapter.setNotes(adapter.notes)
-            }
-        }
-
-        setFragmentResultListener(REQUEST_KEY_DELETE_NOTE) { _, bundle: Bundle ->
-            val note = getNoteFromBundle(bundle)
-            if (note != null) {
-                viewModel.deleteNotes(note)
-            }
-        }
 
         setSubTitle(viewModel.selectedItemsState.value)
 
         lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
 
                 viewModel.loadNotes()
 
@@ -185,6 +150,7 @@ class NotesFragment : Fragment() {
                         is NoteViewModel.NotesState.GetAllNotes -> {
                             binding.lottieAnimationEmptyNotes.isVisible = state.notes.isEmpty()
                             adapter.setNotes(state.notes)
+                            Log.d("Notes", "onViewCreated: update")
                         }
 
                         is NoteViewModel.NotesState.Loading -> {}
@@ -265,7 +231,7 @@ class NotesFragment : Fragment() {
                 NoteAdapter.ItemLookup(binding.rvNotes),
                 StorageStrategy.createParcelableStorage(NoteModel::class.java)
             ).withSelectionPredicate(
-               NoteSelectionPredicate(adapter)
+                NoteSelectionPredicate(adapter)
             ).build()
         )
     }
@@ -316,17 +282,10 @@ class NotesFragment : Fragment() {
         }
     }
 
-    private fun getNoteFromBundle(bundle: Bundle): NoteModel? {
-        return bundle.getParcelableModel(NOTE_KEY, NoteModel::class.java)
-    }
-
     override fun onDestroy() {
         super.onDestroy()
 
         _binding = null
-
-        clearFragmentResultListener(REQUEST_KEY_NEW_NOTE)
-        clearFragmentResultListener(REQUEST_KEY_EDIT_NOTE)
     }
 
     private fun getIconViewType(): Drawable? {

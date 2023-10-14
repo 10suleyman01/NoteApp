@@ -23,6 +23,16 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:text="Title" />
 
+    <TextView
+        android:id="@+id/tvLastEdited"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="16dp"
+        android:paddingEnd="0dp"
+        android:textColor="@color/gray"
+        app:layout_constraintTop_toBottomOf="@+id/etNoteTitle"
+        tools:text="Изменено: вчера" />
+
     <EditText
         android:id="@+id/etNoteText"
         android:layout_width="match_parent"
@@ -41,7 +51,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/etNoteTitle"
+        app:layout_constraintTop_toBottomOf="@+id/tvLastEdited"
         tools:text="Tap to add text" />
 
 
