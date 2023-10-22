@@ -8,11 +8,11 @@
 
     <TextView
         android:id="@+id/tvChooseColor"
-        android:text="@string/select_color"
-        android:textSize="18sp"
-        android:padding="16dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:padding="16dp"
+        android:text="@string/select_color"
+        android:textSize="18sp" />
 
     <com.google.android.flexbox.FlexboxLayout
         android:id="@+id/colors"
@@ -20,7 +20,8 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="16dp"
-        app:alignItems="center"
+        app:alignItems="stretch"
+        app:flexWrap="wrap"
         app:justifyContent="space_between"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -29,6 +30,13 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="@drawable/color_shape_red" />
+
+        <View
+            android:id="@+id/green"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/color_shape_green" />
+
 
         <View
             android:id="@+id/orange"
@@ -49,6 +57,12 @@
             android:background="@drawable/color_shape_cyan" />
 
         <View
+            android:id="@+id/purple"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/color_shape_purple" />
+
+        <View
             android:id="@+id/pink"
             android:layout_width="40dp"
             android:layout_height="40dp"
@@ -59,12 +73,12 @@
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/saveColor"
+        style="@style/NoteApp.Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginTop="4dp"
         android:layout_marginBottom="8dp"
-        style="@style/NoteApp.Button"
         android:text="@string/save" />
 
 </androidx.appcompat.widget.LinearLayoutCompat>

@@ -20,6 +20,7 @@ class MainActivity : AppCompatActivity() {
             setSupportActionBar(included.toolbar)
         }
     }
+
     override fun onDestroy() {
         super.onDestroy()
 

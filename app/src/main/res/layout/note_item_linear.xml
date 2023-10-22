@@ -3,10 +3,10 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/noteCard"
+    style="@style/NoteApp.NoteItem"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
-    app:cardBackgroundColor="@color/white"
     app:cardCornerRadius="12dp"
     app:elevation="4dp"
     app:strokeWidth="1dp">
@@ -49,11 +49,21 @@
                 app:layout_constraintTop_toTopOf="parent"
                 tools:visibility="visible" />
 
+            <View
+                android:id="@+id/favorite"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:background="@drawable/round_bookmark_24"
+                android:visibility="gone"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:visibility="visible" />
+
             <TextView
                 android:id="@+id/tvTitle"
+                style="@style/NoteApp.TextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/black"
                 android:textStyle="bold"
                 app:layout_constraintBottom_toTopOf="@+id/tvText"
                 app:layout_constraintStart_toStartOf="parent"
@@ -62,13 +72,11 @@
 
             <TextView
                 android:id="@+id/tvText"
+                style="@style/NoteApp.TextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="start"
-                android:maxHeight="200dp"
-                android:maxLength="150"
-                android:maxLines="10"
-                android:textColor="@color/black"
+                android:maxLines="6"
                 android:textSize="12sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/tvTitle"

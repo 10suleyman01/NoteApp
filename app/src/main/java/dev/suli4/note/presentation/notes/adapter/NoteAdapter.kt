@@ -1,6 +1,9 @@
 package dev.suli4.note.presentation.notes.adapter
 
 import android.graphics.Color
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.ViewGroup
@@ -47,6 +50,11 @@ class NoteAdapter(
 
     override fun getItemId(position: Int) = notes[position].id
 
+    fun updateNote(note: NoteModel) {
+        Log.d("Notes", "updateNote: $note, pos: ${getPosition(note.id)}")
+        notifyItemChanged(getPosition(note.id), note)
+    }
+
     fun getNote(position: Int) = notes[position]
 
     fun getPosition(noteId: Long) = notes.indexOfFirst { it.id == noteId }
@@ -78,17 +86,6 @@ class NoteAdapter(
 
         fun bind(note: NoteModel) {
             itemNoteItemBinding.apply {
-//                if (note.color == NoteModel.Color.White ||
-//                    note.color == NoteModel.Color.Yellow
-//                ) {
-//                    tvTitle.setTextColor(Color.BLACK)
-//                    tvText.setTextColor(Color.BLACK)
-//                    tvCreatedAt.setTextColor(Color.BLACK)
-//                } else {
-//                    tvTitle.setTextColor(Color.WHITE)
-//                    tvText.setTextColor(Color.WHITE)
-//                    tvCreatedAt.setTextColor(Color.WHITE)
-//                }
 
                 if (note.title.isEmpty()) {
                     tvTitle.isVisible = false
@@ -97,12 +94,27 @@ class NoteAdapter(
                     tvTitle.text = note.title
                 }
 
+                if (note.text.isEmpty()) {
+                    tvText.isVisible = false
+                } else {
+                    tvText.isVisible = true
+                    tvText.text = note.text
+                }
+
                 tvText.text = note.text
                 tvCreatedAt.text = formatTime(note.createdAt)
                 val color = note.color.value
                 setCardBackgroundColor(color)
 
-                checked.isVisible = viewModel.trackerState.value?.isSelected(note) ?: false
+                val isSelected = viewModel.trackerState.value?.isSelected(note) ?: false
+
+                favorite.isVisible = !isSelected && note.isFavorite
+                favorite.background.colorFilter =
+                    PorterDuffColorFilter(
+                        Color.parseColor(note.color.value),
+                        PorterDuff.Mode.SRC_ATOP
+                    )
+                checked.isVisible = isSelected
 
             }
         }

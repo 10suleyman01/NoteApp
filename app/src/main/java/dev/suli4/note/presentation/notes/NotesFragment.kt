@@ -24,6 +24,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.selection.SelectionPredicates
 import androidx.recyclerview.selection.SelectionTracker
 import androidx.recyclerview.selection.StorageStrategy
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
@@ -32,12 +33,11 @@ import dev.suli4.note.R
 import dev.suli4.note.databinding.FragmentNotesBinding
 import dev.suli4.note.ext.PreferencesKeys
 import dev.suli4.note.ext.dataStore
-import dev.suli4.note.ext.getDrawable
+import dev.suli4.note.ext.getDrawableCompat
 import dev.suli4.note.model.NoteModel
 import dev.suli4.note.presentation.MainActivity
 import dev.suli4.note.presentation.notes.adapter.NoteAdapter
 import dev.suli4.note.presentation.notes.adapter.NoteClickListener
-import dev.suli4.note.presentation.notes.adapter.NoteSelectionPredicate
 import dev.suli4.note.presentation.notes.adapter.NotesKeyProvider
 import dev.suli4.note.viewmodel.NoteViewModel
 import dev.suli4.note.viewmodel.NoteViewModel.Companion.GRID_VIEW
@@ -62,6 +62,7 @@ class NotesFragment : Fragment() {
     private lateinit var adapter: NoteAdapter
 
     private var menuDeleteItem: MenuItem? = null
+    private var searchItem: MenuItem? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -141,7 +142,7 @@ class NotesFragment : Fragment() {
         setSubTitle(viewModel.selectedItemsState.value)
 
         lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
 
                 viewModel.loadNotes()
 
@@ -150,7 +151,7 @@ class NotesFragment : Fragment() {
                         is NoteViewModel.NotesState.GetAllNotes -> {
                             binding.lottieAnimationEmptyNotes.isVisible = state.notes.isEmpty()
                             adapter.setNotes(state.notes)
-                            Log.d("Notes", "onViewCreated: update")
+                            Log.d("Notes", "onViewCreated: set notes")
                         }
 
                         is NoteViewModel.NotesState.Loading -> {}
@@ -171,12 +172,12 @@ class NotesFragment : Fragment() {
                 menuDeleteItem = menu.findItem(R.id.delete)
                 menuDeleteItem?.isVisible = viewModel.deleteActionIsVisible.value
 
-                val searchItem = menu.findItem(R.id.search)
-                val searchView = searchItem.actionView as SearchView
+                searchItem = menu.findItem(R.id.search)
+                val searchView = searchItem?.actionView as SearchView
                 val searchQueryState = viewModel.searchQueryState.value
 
                 if (searchQueryState.isNotEmpty()) {
-                    searchItem.expandActionView()
+                    searchItem?.expandActionView()
                     searchView.setQuery(searchQueryState, true)
                     searchView.clearFocus()
                     viewModel.searchItems(searchQueryState)
@@ -191,7 +192,7 @@ class NotesFragment : Fragment() {
                     override fun onQueryTextChange(newText: String?): Boolean {
                         viewModel.setQueryState(newText ?: "")
                         viewModel.searchItems(newText)
-                        return false
+                        return true
                     }
                 })
             }
@@ -231,7 +232,7 @@ class NotesFragment : Fragment() {
                 NoteAdapter.ItemLookup(binding.rvNotes),
                 StorageStrategy.createParcelableStorage(NoteModel::class.java)
             ).withSelectionPredicate(
-                NoteSelectionPredicate(adapter)
+                SelectionPredicates.createSelectAnything()
             ).build()
         )
     }
@@ -264,10 +265,12 @@ class NotesFragment : Fragment() {
                         viewModel.setItemsSelected("Выбрано: $size")
                         viewModel.setShowDeleteAction(true)
                         binding.fabNewNote.isVisible = false
+                        searchItem?.isVisible = false
                     } else {
                         viewModel.setItemsSelected()
                         viewModel.setShowDeleteAction(false)
                         binding.fabNewNote.isVisible = true
+                        searchItem?.isVisible = true
                     }
                     menuDeleteItem?.isVisible = viewModel.deleteActionIsVisible.value
                     setSubTitle(viewModel.selectedItemsState.value)
@@ -290,9 +293,9 @@ class NotesFragment : Fragment() {
 
     private fun getIconViewType(): Drawable? {
         // if current type is GRID then icon to list type
-        if (!viewModel.viewTypeState.value) return getDrawable(R.drawable.baseline_view_list_24)
+        if (!viewModel.viewTypeState.value) return requireContext().getDrawableCompat(R.drawable.baseline_view_list_24)
 
-        return getDrawable(
+        return requireContext().getDrawableCompat(
             R.drawable.baseline_grid_view_24
         )
     }
@@ -309,7 +312,6 @@ class NotesFragment : Fragment() {
         lm.gapStrategy = StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS
         return lm
     }
-
 
     private fun getLayoutManager(): StaggeredGridLayoutManager {
         if (viewModel.viewTypeState.value == GRID_VIEW) return getStaggeredLayoutManager(GRID_VIEW)

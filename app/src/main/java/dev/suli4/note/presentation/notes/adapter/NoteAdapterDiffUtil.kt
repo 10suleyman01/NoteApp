@@ -6,7 +6,7 @@ import dev.suli4.note.model.NoteModel
 class NoteAdapterDiffUtil(
     private val oldList: List<NoteModel>,
     private val newList: List<NoteModel>
-): DiffUtil.Callback() {
+) : DiffUtil.Callback() {
     override fun getOldListSize() = oldList.size
 
     override fun getNewListSize() = newList.size
@@ -16,8 +16,6 @@ class NoteAdapterDiffUtil(
     }
 
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
-        val (title, text, createdAt) = oldList[oldItemPosition]
-        val (nTitle, nText, nCreatedAt) = newList[newItemPosition]
-        return title == nTitle && text == nText && createdAt == nCreatedAt
+        return oldList[oldItemPosition] == newList[newItemPosition]
     }
 }

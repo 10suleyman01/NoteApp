@@ -15,8 +15,11 @@ data class NoteModel(
     var text: String,
     val createdAt: Long,
     val lastEdited: Long,
+    val isFavorite: Boolean,
     var color: Color,
 ) : Parcelable {
+
+    fun contentIsEmpty() = title.isEmpty() && text.isEmpty()
 
     @Parcelize
     enum class Color(val value: String) : Parcelable {
@@ -24,7 +27,9 @@ data class NoteModel(
         Red("#E57373"),
         Orange("#f5c27d"),
         Yellow("#ffe666"),
+        Green("#AED581"),
         Cyan("#bfe7f6"),
+        Purple("#B39DDB"),
         Pink("#f6cebf")
     }
 

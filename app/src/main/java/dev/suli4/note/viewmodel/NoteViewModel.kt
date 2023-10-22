@@ -16,10 +16,6 @@ class NoteViewModel @Inject constructor(
     private val allNotesUseCase: AllUseCases
 ) : ViewModel() {
 
-    init {
-        loadNotes()
-    }
-
     companion object {
         const val GRID_VIEW = false
     }
@@ -93,20 +89,21 @@ class NoteViewModel @Inject constructor(
 
     fun loadNotes() = launch {
         allNotesUseCase.getAllNotesUseCase.invoke().collectLatest { notes ->
-            repeat(notes.size) {
-
-            }
             _state.value = NotesState.GetAllNotes(notes.sortedByDescending { it.createdAt })
         }
         _state.value = NotesState.Loading(false)
     }
 
     fun insertNote(note: NoteModel) = launch {
-        allNotesUseCase.insertNoteUseCase.invoke(note)
+        if (!note.contentIsEmpty()) {
+            allNotesUseCase.insertNoteUseCase.invoke(note)
+        }
     }
 
     fun updateNote(note: NoteModel) = launch {
-        allNotesUseCase.editNoteUseCase.invoke(note)
+        if (!note.contentIsEmpty()) {
+            allNotesUseCase.editNoteUseCase.invoke(note)
+        }
     }
 
     fun deleteNotes(vararg note: NoteModel) = launch {
@@ -121,14 +118,16 @@ class NoteViewModel @Inject constructor(
                 .collectLatest { notes ->
                     _state.value = NotesState.GetAllNotes(notes)
                 }
-            _state.value = NotesState.Loading(false)
         } else {
             loadNotes()
         }
+        _state.value = NotesState.Loading(false)
     }
+
 
     sealed class NotesState {
         data class GetAllNotes(val notes: List<NoteModel>) : NotesState()
+
         data class Loading(val isLoading: Boolean) : NotesState()
     }
 

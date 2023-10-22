@@ -10,6 +10,12 @@
         android:title="@string/choose_color"/>
 
     <item
+        android:id="@+id/favorite"
+        android:icon="@drawable/baseline_bookmark_border_24"
+        app:showAsAction="always"
+        android:title="Избранное"/>
+
+    <item
         android:id="@+id/delete"
         android:icon="@drawable/baseline_delete_24"
         android:visible="false"

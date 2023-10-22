@@ -1,38 +1,41 @@
 package dev.suli4.note.ext
 
+import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Parcelable
+import android.text.format.DateUtils
 import android.widget.EditText
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 
-fun Fragment.getDrawable(id: Int): Drawable? {
-    return ContextCompat.getDrawable(requireContext(), id)
+fun Context.getDrawableCompat(id: Int): Drawable? {
+    return ContextCompat.getDrawable(this, id)
 }
 
-fun formatTime(timeMillis: Long): String {
-    val currentTimeMillis = System.currentTimeMillis()
-    val differenceMillis = currentTimeMillis - timeMillis
+fun Fragment.toast(message: String) {
+    Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+}
 
-    val calendar = Calendar.getInstance()
-    calendar.timeInMillis = timeMillis
+
+fun formatTime(timeMillis: Long): String {
 
     return when {
-        differenceMillis < 24 * 60 * 60 * 1000 -> "сегодня"
-        differenceMillis < 2 * 24 * 60 * 60 * 1000 -> "вчера"
+        DateUtils.isToday(timeMillis) -> "сегодня"
+        DateUtils.isToday(timeMillis + DateUtils.DAY_IN_MILLIS) -> "вчера"
         else -> {
             val sdf = SimpleDateFormat("dd.MM.yyyy HH:mm", Locale.getDefault())
-            sdf.format(calendar.time)
+            return sdf.format(Date(timeMillis))
         }
     }
 }
