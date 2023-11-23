@@ -214,6 +214,7 @@ class NotesFragment : Fragment() {
             }
         }
         binding.sortGroup.isVisible = false
+        setTitle(R.string.app_title)
     }
 
     private suspend fun currentSortingType(): SortingModel {
