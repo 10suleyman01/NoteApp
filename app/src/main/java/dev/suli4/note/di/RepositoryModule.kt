@@ -13,6 +13,7 @@ import dev.suli4.note.usecases.EditNoteUseCase
 import dev.suli4.note.usecases.GetAllNotesUseCase
 import dev.suli4.note.usecases.InsertNoteUseCase
 import dev.suli4.note.usecases.SearchNotesUseCase
+import dev.suli4.note.usecases.SortNotesUseCase
 import javax.inject.Singleton
 
 @Module
@@ -36,6 +37,7 @@ object RepositoryModule {
             getAllNotesUseCase = GetAllNotesUseCase(notesRepository),
             insertNoteUseCase = InsertNoteUseCase(notesRepository),
             searchNotesUseCase = SearchNotesUseCase(notesRepository),
+            sortNotesUseCase = SortNotesUseCase(notesRepository),
             editNoteUseCase = EditNoteUseCase(notesRepository),
             deleteNoteUseCase = DeleteNoteUseCase(notesRepository)
         )

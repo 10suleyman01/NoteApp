@@ -14,4 +14,12 @@
     <string name="choose_color">Choose color</string>
     <string name="select_color">Select color</string>
     <string name="add_image">Add Image</string>
+    <string name="changed">Edited</string>
+    <string name="selected">Selected</string>
+    <string name="editing">Edit</string>
+    <string name="sort">Sort</string>
+    <string name="by_title">By title</string>
+    <string name="ascending">Ascending</string>
+    <string name="descending">Descending</string>
+    <string name="by_date">By date</string>
 </resources>

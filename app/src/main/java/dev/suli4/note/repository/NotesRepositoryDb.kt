@@ -3,12 +3,11 @@ package dev.suli4.note.repository
 import dev.suli4.note.db.dao.NotesDao
 import dev.suli4.note.model.NoteModel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import javax.inject.Inject
 
 class NotesRepositoryDb @Inject constructor(
     private val notesDao: NotesDao
-): NotesRepository {
+) : NotesRepository {
     override fun getAll(): Flow<List<NoteModel>> {
         return notesDao.getAll()
     }
@@ -24,6 +23,15 @@ class NotesRepositoryDb @Inject constructor(
     override suspend fun searchNotes(query: String?): Flow<List<NoteModel>> {
         return notesDao.searchNotes(query)
     }
+
+    override suspend fun sortByTitleAsc(): Flow<List<NoteModel>> = notesDao.sortByTitleAsc()
+
+    override suspend fun sortByTitleDesc(): Flow<List<NoteModel>> = notesDao.sortByTitleDesc()
+
+    override suspend fun sortByCreatedAtAsc(): Flow<List<NoteModel>> = notesDao.sortByCreatedAtAsc()
+
+    override suspend fun sortByCreatedAtDesc(): Flow<List<NoteModel>> =
+        notesDao.sortByCreatedAtDesc()
 
     override suspend fun delete(note: NoteModel) {
         notesDao.delete(note)

@@ -2,7 +2,6 @@ package dev.suli4.note.presentation.notes
 
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -34,8 +33,11 @@ import dev.suli4.note.databinding.FragmentNotesBinding
 import dev.suli4.note.ext.PreferencesKeys
 import dev.suli4.note.ext.dataStore
 import dev.suli4.note.ext.getDrawableCompat
+import dev.suli4.note.ext.protoDataStore
+import dev.suli4.note.ext.serializer.SortingModel
+import dev.suli4.note.ext.setSubTitle
+import dev.suli4.note.ext.setTitle
 import dev.suli4.note.model.NoteModel
-import dev.suli4.note.presentation.MainActivity
 import dev.suli4.note.presentation.notes.adapter.NoteAdapter
 import dev.suli4.note.presentation.notes.adapter.NoteClickListener
 import dev.suli4.note.presentation.notes.adapter.NotesKeyProvider
@@ -86,6 +88,11 @@ class NotesFragment : Fragment() {
 
     }
 
+    override fun onStart() {
+        super.onStart()
+        setTitle(R.string.app_title)
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         viewModel.trackerState.value?.onSaveInstanceState(outState)
@@ -119,6 +126,43 @@ class NotesFragment : Fragment() {
         adapter = NoteAdapter(viewModel)
         adapter.setNoteListener(noteClickListener)
 
+        //region sorting
+
+        binding.apply {
+
+            lifecycleScope.launch {
+                val sortType = currentSortingType()
+                viewModel.setSortType(sortType)
+                when (sortType.field) {
+                    NoteModel.Fields.Title -> {
+
+                        sortByTitleAsc.isChecked = sortType.isAsc
+                        sortByTitleDesc.isChecked = !sortType.isAsc
+                    }
+
+                    NoteModel.Fields.CreatedAt -> {
+                        sortByDateAsc.isChecked = sortType.isAsc
+                        sortByDateDesc.isChecked = !sortType.isAsc
+                    }
+                }
+            }
+
+            sortByTitleAsc.setOnClickListener {
+                setSortingType(SortingModel(isAsc = true, NoteModel.Fields.Title))
+            }
+            sortByTitleDesc.setOnClickListener {
+                setSortingType(SortingModel(isAsc = false, NoteModel.Fields.Title))
+            }
+            sortByDateAsc.setOnClickListener {
+                setSortingType(SortingModel(isAsc = true, NoteModel.Fields.CreatedAt))
+            }
+            sortByDateDesc.setOnClickListener {
+                setSortingType(SortingModel(isAsc = false, NoteModel.Fields.CreatedAt))
+            }
+        }
+
+        //endregion
+
         // init menu
         addMenu()
 
@@ -144,14 +188,13 @@ class NotesFragment : Fragment() {
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
 
-                viewModel.loadNotes()
+                viewModel.loadNotes(viewModel.sortTypeState.value)
 
                 viewModel.state.collectLatest { state ->
                     when (state) {
                         is NoteViewModel.NotesState.GetAllNotes -> {
                             binding.lottieAnimationEmptyNotes.isVisible = state.notes.isEmpty()
                             adapter.setNotes(state.notes)
-                            Log.d("Notes", "onViewCreated: set notes")
                         }
 
                         is NoteViewModel.NotesState.Loading -> {}
@@ -161,7 +204,26 @@ class NotesFragment : Fragment() {
         }
     }
 
+    private fun setSortingType(sortingModel: SortingModel) {
+        viewModel.loadNotes(sortingModel)
+        requireContext().apply {
+            lifecycleScope.launch {
+                protoDataStore.updateData {
+                    it.copy(isAsc = sortingModel.isAsc, field = sortingModel.field)
+                }
+            }
+        }
+        binding.sortGroup.isVisible = false
+    }
+
+    private suspend fun currentSortingType(): SortingModel {
+        requireContext().apply {
+            return protoDataStore.data.first()
+        }
+    }
+
     private fun addMenu() {
+        //region add menu
         val menuHost: MenuHost = requireActivity()
 
         menuHost.addMenuProvider(object : MenuProvider {
@@ -169,8 +231,12 @@ class NotesFragment : Fragment() {
                 menuInflater.inflate(R.menu.menu_notes, menu)
                 menu.findItem(R.id.viewType).icon = getIconViewType()
 
+                //region delete item
                 menuDeleteItem = menu.findItem(R.id.delete)
                 menuDeleteItem?.isVisible = viewModel.deleteActionIsVisible.value
+                //endregion
+
+                //region search
 
                 searchItem = menu.findItem(R.id.search)
                 val searchView = searchItem?.actionView as SearchView
@@ -195,10 +261,12 @@ class NotesFragment : Fragment() {
                         return true
                     }
                 })
+
+                //endregion
             }
 
-            override fun onMenuItemSelected(menuItem: MenuItem): Boolean {
-                when (menuItem.itemId) {
+            override fun onMenuItemSelected(item: MenuItem): Boolean {
+                when (item.itemId) {
                     R.id.viewType -> {
                         viewModel.setViewTypeState(
                             !viewModel.viewTypeState.value
@@ -206,10 +274,31 @@ class NotesFragment : Fragment() {
                         lifecycleScope.launch {
                             updateView(viewModel.viewTypeState.value)
                         }
-                        menuItem.icon = getIconViewType()
+                        item.icon = getIconViewType()
                         binding.rvNotes.layoutManager = getLayoutManager()
                         // animation change layout manager spans
                         animateChangeView()
+                    }
+
+                    R.id.sortType -> {
+
+                        val visible = binding.sortGroup.isVisible
+                        binding.sortGroup.isVisible = !binding.sortGroup.isVisible
+
+                        if (visible) {
+                            setTitle(R.string.app_title)
+                        }
+
+
+                        if (!visible) {
+                            val fadeIn: Animation = AlphaAnimation(0f, 1f)
+                            fadeIn.interpolator = AccelerateInterpolator()
+                            fadeIn.duration = 250
+                            binding.sortGroup.startAnimation(fadeIn)
+                            setTitle(R.string.sort)
+                        }
+
+
                     }
 
                     R.id.delete -> {
@@ -221,6 +310,8 @@ class NotesFragment : Fragment() {
             }
 
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
+        //endregion
     }
 
     private fun initTracker() {
@@ -262,7 +353,7 @@ class NotesFragment : Fragment() {
                 val notes: Int? = viewModel.trackerState.value?.selection?.size()
                 notes?.let { size ->
                     if (size > 0) {
-                        viewModel.setItemsSelected("Выбрано: $size")
+                        viewModel.setItemsSelected("${getString(R.string.selected)}: $size")
                         viewModel.setShowDeleteAction(true)
                         binding.fabNewNote.isVisible = false
                         searchItem?.isVisible = false
@@ -298,10 +389,6 @@ class NotesFragment : Fragment() {
         return requireContext().getDrawableCompat(
             R.drawable.baseline_grid_view_24
         )
-    }
-
-    private fun setSubTitle(subtitle: String) {
-        (requireActivity() as MainActivity).supportActionBar?.subtitle = subtitle
     }
 
     private fun getStaggeredLayoutManager(isLinear: Boolean): StaggeredGridLayoutManager {

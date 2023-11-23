@@ -25,6 +25,7 @@ import dev.suli4.note.databinding.FragmentCreateNoteBinding
 import dev.suli4.note.ext.formatTime
 import dev.suli4.note.ext.getColoredIcon
 import dev.suli4.note.ext.getDrawableCompat
+import dev.suli4.note.ext.setTitle
 import dev.suli4.note.ext.text
 import dev.suli4.note.model.NoteModel
 import dev.suli4.note.viewmodel.NoteViewModel
@@ -53,10 +54,12 @@ class CreateNoteFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         note = args?.note
+        setTitle(R.string.create_new_note)
 
         note?.apply {
             noteViewModel.setCurrentColor(color)
             createViewModel.setState(isFavorite)
+            setTitle(R.string.editing)
         }
     }
 
@@ -81,7 +84,8 @@ class CreateNoteFragment : Fragment() {
                 etNoteTitle.setText(model.title)
                 etNoteText.setText(model.text)
                 if (model.lastEdited > 0) {
-                    val editedTimeText = "Изменено: ${formatTime(model.lastEdited)}"
+                    val editedTimeText =
+                        "${getString(R.string.changed)}:${formatTime(model.lastEdited)}"
                     tvLastEdited.text = editedTimeText
                 } else {
                     tvLastEdited.isVisible = false
@@ -182,7 +186,6 @@ class CreateNoteFragment : Fragment() {
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
 
     }
-
 
     private fun getChooseColorDialog(): AlertDialog {
         val showChooseColorDialog = AlertDialog.Builder(requireContext())

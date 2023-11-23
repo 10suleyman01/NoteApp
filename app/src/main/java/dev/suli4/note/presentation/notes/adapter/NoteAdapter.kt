@@ -3,7 +3,6 @@ package dev.suli4.note.presentation.notes.adapter
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.ViewGroup
@@ -49,11 +48,6 @@ class NoteAdapter(
     override fun getItemCount() = notes.size
 
     override fun getItemId(position: Int) = notes[position].id
-
-    fun updateNote(note: NoteModel) {
-        Log.d("Notes", "updateNote: $note, pos: ${getPosition(note.id)}")
-        notifyItemChanged(getPosition(note.id), note)
-    }
 
     fun getNote(position: Int) = notes[position]
 

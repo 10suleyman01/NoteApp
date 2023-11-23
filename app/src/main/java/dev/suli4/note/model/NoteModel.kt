@@ -33,5 +33,9 @@ data class NoteModel(
         Pink("#f6cebf")
     }
 
+    enum class Fields(val value: String) {
+        Title("title"),
+        CreatedAt("createdAt"),
+    }
 }
 

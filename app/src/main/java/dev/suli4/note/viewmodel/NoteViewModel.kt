@@ -1,9 +1,12 @@
 package dev.suli4.note.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.recyclerview.selection.SelectionTracker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.suli4.note.ext.launch
+import dev.suli4.note.ext.serializer.SortingModel
+import dev.suli4.note.ext.serializer.SortingSerializer
 import dev.suli4.note.model.NoteModel
 import dev.suli4.note.usecases.AllUseCases
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +39,6 @@ class NoteViewModel @Inject constructor(
     }
 
     fun setTracker(selectionTracker: SelectionTracker<NoteModel>) {
-
         _trackerState.value = selectionTracker
     }
 
@@ -66,6 +68,24 @@ class NoteViewModel @Inject constructor(
         _viewTypeState.value = type
     }
 
+    private var _sortTypeState: MutableStateFlow<SortingModel> =
+        MutableStateFlow(SortingSerializer.defaultValue)
+    val sortTypeState = _sortTypeState.asStateFlow()
+
+    fun setSortType(sortingModel: SortingModel) {
+        _sortTypeState.value = sortingModel
+    }
+
+    fun loadNotes(sortingModel: SortingModel = SortingSerializer.defaultValue) = launch {
+        allNotesUseCase.sortNotesUseCase.invoke(
+            sortingModel
+        ).collectLatest { sorted ->
+            Log.d("Notes", "loadNotes: $sorted")
+            _state.value = NotesState.GetAllNotes(sorted)
+        }
+        _state.value = NotesState.Loading(false)
+    }
+
     private var _searchQueryState: MutableStateFlow<String> = MutableStateFlow("")
     val searchQueryState = _searchQueryState.asStateFlow()
 
@@ -85,13 +105,6 @@ class NoteViewModel @Inject constructor(
 
     fun setShowDeleteAction(state: Boolean) {
         _deleteActionIsVisible.value = state
-    }
-
-    fun loadNotes() = launch {
-        allNotesUseCase.getAllNotesUseCase.invoke().collectLatest { notes ->
-            _state.value = NotesState.GetAllNotes(notes.sortedByDescending { it.createdAt })
-        }
-        _state.value = NotesState.Loading(false)
     }
 
     fun insertNote(note: NoteModel) = launch {
@@ -119,11 +132,10 @@ class NoteViewModel @Inject constructor(
                     _state.value = NotesState.GetAllNotes(notes)
                 }
         } else {
-            loadNotes()
+            loadNotes(sortTypeState.value)
         }
         _state.value = NotesState.Loading(false)
     }
-
 
     sealed class NotesState {
         data class GetAllNotes(val notes: List<NoteModel>) : NotesState()

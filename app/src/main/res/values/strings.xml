@@ -13,4 +13,12 @@
     <string name="choose_color">Выбрать цвет</string>
     <string name="select_color">Выберите цвет</string>
     <string name="add_image">Добавить картинку</string>
+    <string name="changed">Изменено</string>
+    <string name="selected">Выбрано:</string>
+    <string name="editing">Изменить</string>
+    <string name="sort">Сортировка</string>
+    <string name="by_title">По заголовке</string>
+    <string name="ascending">По возрастанию</string>
+    <string name="descending">По убыванию</string>
+    <string name="by_date">По дате</string>
 </resources>

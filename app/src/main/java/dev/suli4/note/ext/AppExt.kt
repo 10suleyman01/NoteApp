@@ -3,9 +3,6 @@ package dev.suli4.note.ext
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.Drawable
-import android.os.Build
-import android.os.Bundle
-import android.os.Parcelable
 import android.text.format.DateUtils
 import android.widget.EditText
 import android.widget.Toast
@@ -13,6 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.suli4.note.presentation.MainActivity
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -40,6 +38,22 @@ fun formatTime(timeMillis: Long): String {
     }
 }
 
+fun Fragment.setTitle(resId: Int) {
+    (requireActivity() as MainActivity).supportActionBar?.title = getString(resId)
+}
+
+fun Fragment.setSubTitle(resId: Int) {
+    (requireActivity() as MainActivity).supportActionBar?.subtitle = getString(resId)
+}
+
+fun Fragment.setTitle(title: String) {
+    (requireActivity() as MainActivity).supportActionBar?.title = title
+}
+
+fun Fragment.setSubTitle(subTitle: String) {
+    (requireActivity() as MainActivity).supportActionBar?.subtitle = subTitle
+}
+
 fun Fragment.getColoredIcon(icon: Int, hexColor: String): Drawable? {
     val drawable = ContextCompat.getDrawable(
         requireContext(),
@@ -53,13 +67,6 @@ fun Fragment.getColoredIcon(icon: Int, hexColor: String): Drawable? {
 
 fun EditText.text(): String {
     return text.toString()
-}
-
-fun <T : Parcelable> Bundle.getParcelableModel(key: String, clazz: Class<T>): T? {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        return getParcelable(key, clazz)
-    }
-    return getParcelable(key)
 }
 
 fun ViewModel.launch(callback: suspend () -> Unit) {

@@ -17,6 +17,18 @@ interface NotesDao {
     @Query("SELECT * FROM notes WHERE title LIKE :query OR text LIKE :query || '%'")
     fun searchNotes(query: String?): Flow<List<NoteModel>>
 
+    @Query("SELECT * FROM notes ORDER BY title ASC")
+    fun sortByTitleAsc(): Flow<List<NoteModel>>
+
+    @Query("SELECT * FROM notes ORDER BY title DESC")
+    fun sortByTitleDesc(): Flow<List<NoteModel>>
+
+    @Query("SELECT * FROM notes ORDER BY createdAt ASC")
+    fun sortByCreatedAtAsc(): Flow<List<NoteModel>>
+
+    @Query("SELECT * FROM notes ORDER BY createdAt DESC")
+    fun sortByCreatedAtDesc(): Flow<List<NoteModel>>
+
     @Insert
     suspend fun insert(note: NoteModel)
 

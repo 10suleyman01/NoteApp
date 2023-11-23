@@ -12,5 +12,13 @@ interface NotesRepository {
 
     suspend fun searchNotes(query: String?): Flow<List<NoteModel>>
 
+    suspend fun sortByTitleAsc(): Flow<List<NoteModel>>
+
+    suspend fun sortByTitleDesc(): Flow<List<NoteModel>>
+
+    suspend fun sortByCreatedAtAsc(): Flow<List<NoteModel>>
+
+    suspend fun sortByCreatedAtDesc(): Flow<List<NoteModel>>
+
     suspend fun delete(note: NoteModel)
 }
