@@ -63,6 +63,7 @@ class NotesFragment : Fragment() {
     private lateinit var adapter: NoteAdapter
 
     private var menuDeleteItem: MenuItem? = null
+    private var searchView: SearchView? = null
     private var searchItem: MenuItem? = null
     private var viewTypeItem: MenuItem? = null
     private var sortItem: MenuItem? = null
@@ -210,17 +211,29 @@ class NotesFragment : Fragment() {
 
                 //region search
                 searchItem = menu.findItem(R.id.search)
-                val searchView = searchItem?.actionView as SearchView
+                searchView = searchItem?.actionView as SearchView
                 val searchQueryState = viewModel.searchQueryState.value
 
-                if (searchQueryState.isNotEmpty()) {
+                val queryIsNotEmpty = searchQueryState.isNotEmpty()
+
+                searchView?.setOnSearchClickListener {
+                    sortItem?.isVisible = false
+                    viewTypeItem?.isVisible = false
+                }
+
+                searchView?.setOnQueryTextFocusChangeListener { _, hasFocus ->
+                    sortItem?.isVisible = !hasFocus
+                    viewTypeItem?.isVisible = !hasFocus
+                }
+
+                if (queryIsNotEmpty) {
                     searchItem?.expandActionView()
-                    searchView.setQuery(searchQueryState, true)
-                    searchView.clearFocus()
+                    searchView?.setQuery(searchQueryState, true)
+                    searchView?.clearFocus()
                     viewModel.searchItems(searchQueryState)
                 }
 
-                searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+                searchView?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                     override fun onQueryTextSubmit(query: String?): Boolean {
                         viewModel.searchItems(query)
                         return true
@@ -327,6 +340,10 @@ class NotesFragment : Fragment() {
             }
 
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
+
+        searchItem?.isActionViewExpanded?.let {
+            sortItem?.isVisible = it
+        }
         //endregion
     }
 
@@ -387,14 +404,9 @@ class NotesFragment : Fragment() {
                 notes?.let { size ->
                     if (size > 0) {
                         viewModel.setItemsSelected("${getString(R.string.selected)} $size")
-                        viewModel.setShowDeleteAction(true)
-                        binding.fabNewNote.isVisible = false
                         showActionsItems(false)
                     } else {
                         viewModel.setItemsSelected()
-                        viewModel.setShowDeleteAction(false)
-                        binding.fabNewNote.isVisible = true
-
                         showActionsItems(true)
                     }
                     menuDeleteItem?.isVisible = viewModel.deleteActionIsVisible.value
@@ -404,6 +416,10 @@ class NotesFragment : Fragment() {
         }
 
     private fun showActionsItems(show: Boolean) {
+
+        viewModel.setShowDeleteAction(!show)
+
+        binding.fabNewNote.isVisible = show
         searchItem?.isVisible = show
         viewTypeItem?.isVisible = show
         sortItem?.isVisible = show
