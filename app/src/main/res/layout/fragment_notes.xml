@@ -11,9 +11,10 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/sortGroup"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         tools:layoutManager="androidx.recyclerview.widget.StaggeredGridLayoutManager"
-        tools:layout_editor_absoluteX="-19dp"
         tools:listitem="@layout/note_item_linear"
         tools:spanCount="2" />
 
@@ -46,54 +47,5 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/baseline_add_24"
         app:tint="@color/white" />
-
-    <RadioGroup
-        android:id="@+id/sortGroup"
-        android:layout_width="0dp"
-        android:visibility="gone"
-        tools:visibility="visible"
-        android:layout_marginStart="8dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <TextView
-            android:text="@string/by_title"
-            android:layout_marginStart="8dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <RadioButton
-            android:id="@+id/sortByTitleAsc"
-            android:layout_width="wrap_content"
-            android:layout_height="30dp"
-            android:text="@string/ascending" />
-
-        <RadioButton
-            android:id="@+id/sortByTitleDesc"
-            android:layout_width="wrap_content"
-            android:layout_height="30dp"
-            android:text="@string/descending" />
-
-        <TextView
-            android:layout_marginStart="8dp"
-            android:text="@string/by_date"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-
-        <RadioButton
-            android:id="@+id/sortByDateAsc"
-            android:layout_width="wrap_content"
-            android:layout_height="30dp"
-            android:text="@string/ascending" />
-
-        <RadioButton
-            android:id="@+id/sortByDateDesc"
-            android:layout_width="wrap_content"
-            android:layout_height="30dp"
-            android:text="@string/descending" />
-
-    </RadioGroup>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

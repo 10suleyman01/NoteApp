@@ -4,6 +4,9 @@ import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.text.format.DateUtils
+import android.view.animation.AccelerateInterpolator
+import android.view.animation.AlphaAnimation
+import android.view.animation.Animation
 import android.widget.EditText
 import android.widget.Toast
 import androidx.core.content.ContextCompat
@@ -25,6 +28,12 @@ fun Fragment.toast(message: String) {
     Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
 }
 
+fun fadeInAnim(): Animation {
+    val fadeIn: Animation = AlphaAnimation(0f, 1f)
+    fadeIn.interpolator = AccelerateInterpolator()
+    fadeIn.duration = 250
+    return fadeIn
+}
 
 fun formatTime(timeMillis: Long): String {
 

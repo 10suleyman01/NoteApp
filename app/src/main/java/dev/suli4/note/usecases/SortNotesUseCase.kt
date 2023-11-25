@@ -1,6 +1,6 @@
 package dev.suli4.note.usecases
 
-import dev.suli4.note.ext.serializer.SortingModel
+import dev.suli4.note.db.serializer.SortingModel
 import dev.suli4.note.model.NoteModel
 import dev.suli4.note.repository.NotesRepository
 import kotlinx.coroutines.flow.Flow

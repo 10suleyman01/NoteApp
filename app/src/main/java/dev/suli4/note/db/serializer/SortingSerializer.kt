@@ -1,4 +1,4 @@
-package dev.suli4.note.ext.serializer
+package dev.suli4.note.db.serializer
 
 import androidx.datastore.core.Serializer
 import dev.suli4.note.model.NoteModel

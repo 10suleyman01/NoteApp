@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.recyclerview.selection.SelectionTracker
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.suli4.note.ext.launch
-import dev.suli4.note.ext.serializer.SortingModel
-import dev.suli4.note.ext.serializer.SortingSerializer
+import dev.suli4.note.db.serializer.SortingModel
+import dev.suli4.note.db.serializer.SortingSerializer
 import dev.suli4.note.model.NoteModel
 import dev.suli4.note.usecases.AllUseCases
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,7 +70,7 @@ class NoteViewModel @Inject constructor(
 
     private var _sortTypeState: MutableStateFlow<SortingModel> =
         MutableStateFlow(SortingSerializer.defaultValue)
-    val sortTypeState = _sortTypeState.asStateFlow()
+    private val sortTypeState = _sortTypeState.asStateFlow()
 
     fun setSortType(sortingModel: SortingModel) {
         _sortTypeState.value = sortingModel
@@ -80,7 +80,6 @@ class NoteViewModel @Inject constructor(
         allNotesUseCase.sortNotesUseCase.invoke(
             sortingModel
         ).collectLatest { sorted ->
-            Log.d("Notes", "loadNotes: $sorted")
             _state.value = NotesState.GetAllNotes(sorted)
         }
         _state.value = NotesState.Loading(false)

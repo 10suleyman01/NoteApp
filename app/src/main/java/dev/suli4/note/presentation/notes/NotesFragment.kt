@@ -8,9 +8,6 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AccelerateInterpolator
-import android.view.animation.AlphaAnimation
-import android.view.animation.Animation
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.widget.SearchView
 import androidx.core.view.MenuHost
@@ -30,11 +27,12 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import dev.suli4.note.R
 import dev.suli4.note.databinding.FragmentNotesBinding
+import dev.suli4.note.db.serializer.SortingModel
 import dev.suli4.note.ext.PreferencesKeys
 import dev.suli4.note.ext.dataStore
+import dev.suli4.note.ext.fadeInAnim
 import dev.suli4.note.ext.getDrawableCompat
 import dev.suli4.note.ext.protoDataStore
-import dev.suli4.note.ext.serializer.SortingModel
 import dev.suli4.note.ext.setSubTitle
 import dev.suli4.note.ext.setTitle
 import dev.suli4.note.model.NoteModel
@@ -44,6 +42,7 @@ import dev.suli4.note.presentation.notes.adapter.NotesKeyProvider
 import dev.suli4.note.viewmodel.NoteViewModel
 import dev.suli4.note.viewmodel.NoteViewModel.Companion.GRID_VIEW
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -65,6 +64,11 @@ class NotesFragment : Fragment() {
 
     private var menuDeleteItem: MenuItem? = null
     private var searchItem: MenuItem? = null
+
+    private var sortByNameAsc: MenuItem? = null
+    private var sortByNameDesc: MenuItem? = null
+    private var sortByCreatedAtAsc: MenuItem? = null
+    private var sortByCreatedAtDesc: MenuItem? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -136,28 +140,12 @@ class NotesFragment : Fragment() {
                 when (sortType.field) {
                     NoteModel.Fields.Title -> {
 
-                        sortByTitleAsc.isChecked = sortType.isAsc
-                        sortByTitleDesc.isChecked = !sortType.isAsc
+
                     }
 
                     NoteModel.Fields.CreatedAt -> {
-                        sortByDateAsc.isChecked = sortType.isAsc
-                        sortByDateDesc.isChecked = !sortType.isAsc
                     }
                 }
-            }
-
-            sortByTitleAsc.setOnClickListener {
-                setSortingType(SortingModel(isAsc = true, NoteModel.Fields.Title))
-            }
-            sortByTitleDesc.setOnClickListener {
-                setSortingType(SortingModel(isAsc = false, NoteModel.Fields.Title))
-            }
-            sortByDateAsc.setOnClickListener {
-                setSortingType(SortingModel(isAsc = true, NoteModel.Fields.CreatedAt))
-            }
-            sortByDateDesc.setOnClickListener {
-                setSortingType(SortingModel(isAsc = false, NoteModel.Fields.CreatedAt))
             }
         }
 
@@ -188,13 +176,14 @@ class NotesFragment : Fragment() {
         lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
 
-                viewModel.loadNotes(viewModel.sortTypeState.value)
+                viewModel.loadNotes(currentSortingType())
 
                 viewModel.state.collectLatest { state ->
                     when (state) {
                         is NoteViewModel.NotesState.GetAllNotes -> {
                             binding.lottieAnimationEmptyNotes.isVisible = state.notes.isEmpty()
                             adapter.setNotes(state.notes)
+                            scrollUp()
                         }
 
                         is NoteViewModel.NotesState.Loading -> {}
@@ -213,7 +202,6 @@ class NotesFragment : Fragment() {
                 }
             }
         }
-        binding.sortGroup.isVisible = false
         setTitle(R.string.app_title)
     }
 
@@ -238,7 +226,6 @@ class NotesFragment : Fragment() {
                 //endregion
 
                 //region search
-
                 searchItem = menu.findItem(R.id.search)
                 val searchView = searchItem?.actionView as SearchView
                 val searchQueryState = viewModel.searchQueryState.value
@@ -262,12 +249,49 @@ class NotesFragment : Fragment() {
                         return true
                     }
                 })
+                //endregion
+
+                //region sort
+                sortByNameAsc = menu.findItem(R.id.sort_by_name_asc)
+                sortByNameDesc = menu.findItem(R.id.sort_by_name_desc)
+
+                sortByCreatedAtAsc = menu.findItem(R.id.sort_by_created_at_asc)
+                sortByCreatedAtDesc = menu.findItem(R.id.sort_by_created_at_desc)
+
+                var lastSortingModel: SortingModel? = null
+
+                lifecycleScope.launch(Dispatchers.Main) {
+
+                    val sortingType = currentSortingType()
+
+                    if (sortingType != lastSortingModel) {
+                        lastSortingModel = sortingType
+
+                        when (sortingType.field) {
+                            NoteModel.Fields.Title -> {
+                                if (sortingType.isAsc) {
+                                    sortByNameAsc?.isChecked = true
+                                } else {
+                                    sortByNameDesc?.isChecked = true
+                                }
+                            }
+
+                            NoteModel.Fields.CreatedAt -> {
+                                if (sortingType.isAsc) {
+                                    sortByCreatedAtAsc?.isChecked = true
+                                } else {
+                                    sortByCreatedAtDesc?.isChecked = true
+                                }
+                            }
+                        }
+                    }
+                }
 
                 //endregion
             }
 
             override fun onMenuItemSelected(item: MenuItem): Boolean {
-                when (item.itemId) {
+                return when (item.itemId) {
                     R.id.viewType -> {
                         viewModel.setViewTypeState(
                             !viewModel.viewTypeState.value
@@ -278,62 +302,85 @@ class NotesFragment : Fragment() {
                         item.icon = getIconViewType()
                         binding.rvNotes.layoutManager = getLayoutManager()
                         // animation change layout manager spans
-                        animateChangeView()
+                        binding.rvNotes.startAnimation(fadeInAnim())
+                        true
                     }
 
-                    R.id.sortType -> {
+                    R.id.sort_by_name_asc -> {
+                        setSortingType(SortingModel(isAsc = true, NoteModel.Fields.Title))
+                        menuItemCreatedAtUncheck(item)
+                        true
+                    }
 
-                        val visible = binding.sortGroup.isVisible
-                        binding.sortGroup.isVisible = !binding.sortGroup.isVisible
+                    R.id.sort_by_name_desc -> {
+                        setSortingType(SortingModel(isAsc = false, NoteModel.Fields.Title))
+                        menuItemCreatedAtUncheck(item)
+                        true
+                    }
 
-                        if (visible) {
-                            setTitle(R.string.app_title)
-                        }
+                    R.id.sort_by_created_at_asc -> {
+                        setSortingType(SortingModel(isAsc = true, NoteModel.Fields.CreatedAt))
+                        menuItemTitleUncheck(item)
+                        true
+                    }
 
-
-                        if (!visible) {
-                            val fadeIn: Animation = AlphaAnimation(0f, 1f)
-                            fadeIn.interpolator = AccelerateInterpolator()
-                            fadeIn.duration = 250
-                            binding.sortGroup.startAnimation(fadeIn)
-                            setTitle(R.string.sort)
-                        }
-
-
+                    R.id.sort_by_created_at_desc -> {
+                        setSortingType(SortingModel(isAsc = false, NoteModel.Fields.CreatedAt))
+                        menuItemTitleUncheck(item)
+                        true
                     }
 
                     R.id.delete -> {
                         viewModel.deleteNotes(*viewModel.shouldToDeleteItems.value.toTypedArray())
                         viewModel.clearSelection()
+
+                        true
                     }
+
+                    else -> true
                 }
-                return true
             }
 
         }, viewLifecycleOwner, Lifecycle.State.RESUMED)
-
         //endregion
     }
 
+    private fun scrollUp() {
+        lifecycleScope.launch {
+            delay(200)
+            binding.rvNotes.scrollToPosition(0)
+        }
+    }
+
+    private fun menuItemTitleUncheck(item: MenuItem) {
+        item.isChecked = true
+        sortByNameAsc?.isChecked = false
+        sortByNameDesc?.isChecked = false
+        requireActivity().invalidateOptionsMenu()
+    }
+
+    private fun menuItemCreatedAtUncheck(item: MenuItem) {
+        item.isChecked = true
+        sortByCreatedAtAsc?.isChecked = false
+        sortByCreatedAtDesc?.isChecked = false
+        requireActivity().invalidateOptionsMenu()
+    }
+
     private fun initTracker() {
+
+        val rvNotes = binding.rvNotes
+
         viewModel.setTracker(
             SelectionTracker.Builder(
                 SELECTION_NOTES_ID,
-                binding.rvNotes,
+                rvNotes,
                 NotesKeyProvider(adapter),
-                NoteAdapter.ItemLookup(binding.rvNotes),
+                NoteAdapter.ItemLookup(rvNotes),
                 StorageStrategy.createParcelableStorage(NoteModel::class.java)
             ).withSelectionPredicate(
                 SelectionPredicates.createSelectAnything()
             ).build()
         )
-    }
-
-    private fun animateChangeView() {
-        val fadeIn: Animation = AlphaAnimation(0f, 1f)
-        fadeIn.interpolator = AccelerateInterpolator()
-        fadeIn.duration = 300
-        binding.rvNotes.startAnimation(fadeIn)
     }
 
     private fun selectionObserver(): SelectionTracker.SelectionObserver<NoteModel> =
@@ -386,16 +433,13 @@ class NotesFragment : Fragment() {
     private fun getIconViewType(): Drawable? {
         // if current type is GRID then icon to list type
         if (!viewModel.viewTypeState.value) return requireContext().getDrawableCompat(R.drawable.baseline_view_list_24)
-
         return requireContext().getDrawableCompat(
             R.drawable.baseline_grid_view_24
         )
     }
 
     private fun getStaggeredLayoutManager(isLinear: Boolean): StaggeredGridLayoutManager {
-        val displayMetrics = requireActivity().resources.displayMetrics
-        val dpWidth = displayMetrics.widthPixels / displayMetrics.density
-        val spanCount = if (isLinear) 1 else (dpWidth / 150).toInt()
+        val spanCount = if (isLinear) 1 else 2
         val lm = StaggeredGridLayoutManager(spanCount, StaggeredGridLayoutManager.VERTICAL)
         lm.gapStrategy = StaggeredGridLayoutManager.GAP_HANDLING_MOVE_ITEMS_BETWEEN_SPANS
         return lm
