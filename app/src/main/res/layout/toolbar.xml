@@ -8,7 +8,6 @@
 
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
-        app:theme="@style/NoteApp.Toolbar"
         app:title="@string/app_title"
         tools:subtitle="@string/app_title"
         android:layout_width="match_parent"

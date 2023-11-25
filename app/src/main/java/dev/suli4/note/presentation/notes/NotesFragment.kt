@@ -64,6 +64,8 @@ class NotesFragment : Fragment() {
 
     private var menuDeleteItem: MenuItem? = null
     private var searchItem: MenuItem? = null
+    private var viewTypeItem: MenuItem? = null
+    private var sortItem: MenuItem? = null
 
     private var sortByNameAsc: MenuItem? = null
     private var sortByNameDesc: MenuItem? = null
@@ -129,27 +131,6 @@ class NotesFragment : Fragment() {
 
         adapter = NoteAdapter(viewModel)
         adapter.setNoteListener(noteClickListener)
-
-        //region sorting
-
-        binding.apply {
-
-            lifecycleScope.launch {
-                val sortType = currentSortingType()
-                viewModel.setSortType(sortType)
-                when (sortType.field) {
-                    NoteModel.Fields.Title -> {
-
-
-                    }
-
-                    NoteModel.Fields.CreatedAt -> {
-                    }
-                }
-            }
-        }
-
-        //endregion
 
         // init menu
         addMenu()
@@ -218,7 +199,9 @@ class NotesFragment : Fragment() {
         menuHost.addMenuProvider(object : MenuProvider {
             override fun onCreateMenu(menu: Menu, menuInflater: MenuInflater) {
                 menuInflater.inflate(R.menu.menu_notes, menu)
-                menu.findItem(R.id.viewType).icon = getIconViewType()
+
+                viewTypeItem = menu.findItem(R.id.viewType)
+                viewTypeItem?.icon = getIconViewType()
 
                 //region delete item
                 menuDeleteItem = menu.findItem(R.id.delete)
@@ -252,6 +235,8 @@ class NotesFragment : Fragment() {
                 //endregion
 
                 //region sort
+                sortItem = menu.findItem(R.id.sort)
+
                 sortByNameAsc = menu.findItem(R.id.sort_by_name_asc)
                 sortByNameDesc = menu.findItem(R.id.sort_by_name_desc)
 
@@ -401,21 +386,28 @@ class NotesFragment : Fragment() {
                 val notes: Int? = viewModel.trackerState.value?.selection?.size()
                 notes?.let { size ->
                     if (size > 0) {
-                        viewModel.setItemsSelected("${getString(R.string.selected)}: $size")
+                        viewModel.setItemsSelected("${getString(R.string.selected)} $size")
                         viewModel.setShowDeleteAction(true)
                         binding.fabNewNote.isVisible = false
-                        searchItem?.isVisible = false
+                        showActionsItems(false)
                     } else {
                         viewModel.setItemsSelected()
                         viewModel.setShowDeleteAction(false)
                         binding.fabNewNote.isVisible = true
-                        searchItem?.isVisible = true
+
+                        showActionsItems(true)
                     }
                     menuDeleteItem?.isVisible = viewModel.deleteActionIsVisible.value
                     setSubTitle(viewModel.selectedItemsState.value)
                 }
             }
         }
+
+    private fun showActionsItems(show: Boolean) {
+        searchItem?.isVisible = show
+        viewTypeItem?.isVisible = show
+        sortItem?.isVisible = show
+    }
 
 
     suspend fun updateView(type: Boolean) {

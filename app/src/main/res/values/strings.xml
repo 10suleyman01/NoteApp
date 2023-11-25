@@ -21,4 +21,6 @@
     <string name="ascending">По возрастанию</string>
     <string name="descending">По убыванию</string>
     <string name="by_date">По дате</string>
+    <string name="add_audio">Добавить аудио</string>
+    <string name="favorites">Избранное</string>
 </resources>

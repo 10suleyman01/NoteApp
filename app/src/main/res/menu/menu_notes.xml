@@ -22,44 +22,48 @@
         android:id="@+id/viewType"
         android:icon="@drawable/baseline_grid_view_24"
         android:title="@string/change_view"
-        app:showAsAction="always" />
+        app:showAsAction="ifRoom" />
 
-    <group>
+    <item
+        android:id="@+id/sort"
+        android:title="@string/sort"
+        app:showAsAction="always"
+        android:icon="@drawable/round_sort_24">
+        <menu>
+            <item
+                android:id="@+id/sort_by_name"
+                android:title="@string/by_title">
+                <menu>
+                    <group android:checkableBehavior="single">
+                        <item
+                            android:id="@+id/sort_by_name_asc"
+                            android:title="@string/ascending" />
+                        <item
+                            android:id="@+id/sort_by_name_desc"
+                            android:title="@string/descending" />
+                    </group>
+                </menu>
+            </item>
 
+            <item
+                android:id="@+id/sort_by_created_at"
+                android:title="@string/by_date"
+                app:showAsAction="never">
+                <menu>
+                    <group android:checkableBehavior="single">
+                        <item
+                            android:id="@+id/sort_by_created_at_asc"
+                            android:title="@string/ascending" />
+                        <item
+                            android:id="@+id/sort_by_created_at_desc"
+                            android:title="@string/descending" />
+                    </group>
+                </menu>
+            </item>
 
-        <item
-            android:id="@+id/sort_by_name"
-            android:title="@string/by_title"
-            app:showAsAction="never">
-            <menu>
-                <group android:checkableBehavior="single">
-                    <item
-                        android:id="@+id/sort_by_name_asc"
-                        android:title="@string/ascending" />
-                    <item
-                        android:id="@+id/sort_by_name_desc"
-                        android:title="@string/descending" />
-                </group>
-            </menu>
-        </item>
+        </menu>
 
-        <item
-            android:id="@+id/sort_by_created_at"
-            android:title="@string/by_date"
-            app:showAsAction="never">
-            <menu>
-                <group android:checkableBehavior="single">
-                    <item
-                        android:id="@+id/sort_by_created_at_asc"
-                        android:title="@string/ascending" />
-                    <item
-                        android:id="@+id/sort_by_created_at_desc"
-                        android:title="@string/descending" />
-                </group>
-            </menu>
-        </item>
-
-    </group>
+    </item>
 
 
 </menu>

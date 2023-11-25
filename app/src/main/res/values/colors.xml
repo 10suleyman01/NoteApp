@@ -1,11 +1,14 @@
-<?xml version="1.0" encoding="utf-8"?>
+
 <resources>
+    <color name="seed">#607D8B</color>
+    <color name="white">#ffffff</color>
+    <color name="black">#000000</color>
+
     <color name="primary">#607D8B</color>
     <color name="primary_dark">#455A64</color>
     <color name="accent">#9E9E9E</color>
+    <color name="app_background_dark">#09090B</color>
     <color name="background_dark">#121316</color>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
     <color name="light_white">#FFFCFC</color>
     <color name="gray">#bdbdbd</color>
     <color name="et_text_color">#B3B2B2</color>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/attach_image"
+        android:icon="@drawable/baseline_image_24"
+        app:showAsAction="always"
+        android:title="@string/add_image" />
+
+    <item
+        android:id="@+id/attach_audio"
+        android:icon="@drawable/round_mic_24"
+        app:showAsAction="ifRoom"
+        android:title="@string/add_audio" />
+
+</menu>

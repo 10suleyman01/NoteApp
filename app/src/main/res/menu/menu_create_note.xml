@@ -13,7 +13,7 @@
         android:id="@+id/favorite"
         android:icon="@drawable/baseline_bookmark_border_24"
         app:showAsAction="always"
-        android:title="Избранное"/>
+        android:title="@string/favorites"/>
 
     <item
         android:id="@+id/delete"
