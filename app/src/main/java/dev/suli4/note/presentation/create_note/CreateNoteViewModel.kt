@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 class CreateNoteViewModel : ViewModel() {
 
     private var _favoriteState: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    private var favoriteState = _favoriteState.asStateFlow()
+    private val favoriteState = _favoriteState.asStateFlow()
 
     fun toggleFavorite() {
         _favoriteState.value = !_favoriteState.value
@@ -24,5 +24,12 @@ class CreateNoteViewModel : ViewModel() {
 
     fun reset() {
         _favoriteState.value = false
+    }
+
+    private var _imagePathState: MutableStateFlow<String> = MutableStateFlow("")
+    val imagePathState = _imagePathState.asStateFlow()
+
+    fun setImagePath(path: String) {
+        _imagePathState.value = path
     }
 }

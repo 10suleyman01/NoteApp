@@ -11,6 +11,7 @@ import dev.suli4.note.db.NotesDatabase
 import dev.suli4.note.db.dao.NotesDao
 import dev.suli4.note.db.migrations.Migration2_3AddingLastEdited
 import dev.suli4.note.db.migrations.Migration3_4AddingIsFavorite
+import dev.suli4.note.db.migrations.Migration4_5AddingImagePath
 import javax.inject.Singleton
 
 @Module
@@ -25,6 +26,7 @@ object DatabaseModule {
         )
             .addMigrations(Migration2_3AddingLastEdited)
             .addMigrations(Migration3_4AddingIsFavorite)
+            .addMigrations(Migration4_5AddingImagePath)
             .build()
     }
 

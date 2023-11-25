@@ -3,6 +3,7 @@ package dev.suli4.note.presentation.notes.adapter
 import android.graphics.Color
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffColorFilter
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.ViewGroup
@@ -11,6 +12,7 @@ import androidx.recyclerview.selection.ItemDetailsLookup
 import androidx.recyclerview.selection.ItemDetailsLookup.ItemDetails
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import dev.suli4.note.databinding.NoteItemLinearBinding
 import dev.suli4.note.ext.formatTime
 import dev.suli4.note.model.NoteModel
@@ -109,6 +111,12 @@ class NoteAdapter(
                         PorterDuff.Mode.SRC_ATOP
                     )
                 checked.isVisible = isSelected
+
+                note.imagePath?.let {
+                    Glide.with(itemNoteItemBinding.itemImage.context)
+                        .load(Uri.parse("file://$it"))
+                        .into(itemNoteItemBinding.itemImage)
+                }
 
             }
         }

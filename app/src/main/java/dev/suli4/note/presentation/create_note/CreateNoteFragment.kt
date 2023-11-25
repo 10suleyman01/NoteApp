@@ -1,6 +1,7 @@
 package dev.suli4.note.presentation.create_note
 
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -8,6 +9,8 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.MenuHost
 import androidx.core.view.MenuProvider
@@ -18,6 +21,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.bumptech.glide.Glide
 import dagger.hilt.android.AndroidEntryPoint
 import dev.suli4.note.R
 import dev.suli4.note.databinding.ChooseColorViewBinding
@@ -27,7 +31,9 @@ import dev.suli4.note.ext.getColoredIcon
 import dev.suli4.note.ext.getDrawableCompat
 import dev.suli4.note.ext.setTitle
 import dev.suli4.note.ext.text
+import dev.suli4.note.ext.toast
 import dev.suli4.note.model.NoteModel
+import dev.suli4.note.utils.saveImageToInternalStorage
 import dev.suli4.note.viewmodel.NoteViewModel
 
 
@@ -50,6 +56,26 @@ class CreateNoteFragment : Fragment() {
     private var alertDialog: AlertDialog? = null
     private var menuItemSelectionColor: MenuItem? = null
     private var menuItemFavorite: MenuItem? = null
+
+    private val pickMedia =
+        registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            if (uri != null) {
+                val saved = requireContext().saveImageToInternalStorage(uri)
+                saved?.let {
+                    createViewModel.setImagePath(saved)
+                    loadImage(saved)
+                }
+            }
+        }
+
+    private fun loadImage(path: String) {
+
+        if (path.isEmpty()) return
+
+        Glide.with(binding.imageView.context)
+            .load(Uri.parse("file://${path}"))
+            .into(binding.imageView)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -80,9 +106,26 @@ class CreateNoteFragment : Fragment() {
 
         binding.apply {
 
+            bottomMenu.menu.apply {
+
+                val attachImage = findItem(R.id.attach_image)
+
+                attachImage.setOnMenuItemClickListener { item ->
+                    pickMedia.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                    true
+                }
+
+            }
+
             note?.let { model ->
                 etNoteTitle.setText(model.title)
                 etNoteText.setText(model.text)
+
+                if (model.imagePath!!.isNotEmpty()) {
+                    toast(model.imagePath!!)
+                    loadImage(model.imagePath ?: "")
+                }
+
                 if (model.lastEdited > 0) {
                     val editedTimeText =
                         "${getString(R.string.changed)}:${formatTime(model.lastEdited)}"
@@ -106,6 +149,7 @@ class CreateNoteFragment : Fragment() {
                                 isFavorite = createViewModel.isFavorite(),
                                 color = noteViewModel.currentColorState.value,
                                 lastEdited = System.currentTimeMillis(),
+                                imagePath = createViewModel.imagePathState.value
                             )
                         )
                     }
@@ -118,6 +162,7 @@ class CreateNoteFragment : Fragment() {
                             lastEdited = System.currentTimeMillis(),
                             isFavorite = createViewModel.isFavorite(),
                             color = noteViewModel.currentColorState.value,
+                            imagePath = createViewModel.imagePathState.value
                         )
                     )
                 }

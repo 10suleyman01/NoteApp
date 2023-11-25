@@ -1,9 +1,12 @@
 package dev.suli4.note.presentation
 
 import android.os.Bundle
+import android.os.FileUtils
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import dagger.hilt.android.AndroidEntryPoint
 import dev.suli4.note.databinding.ActivityMainBinding
+import dev.suli4.note.utils.saveImageToInternalStorage
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {

@@ -17,6 +17,7 @@ data class NoteModel(
     val lastEdited: Long,
     val isFavorite: Boolean,
     var color: Color,
+    var imagePath: String? = ""
 ) : Parcelable {
 
     fun contentIsEmpty() = title.isEmpty() && text.isEmpty()

@@ -8,7 +8,7 @@ import java.io.IOException
 
 fun Context.saveImageToInternalStorage(uri: Uri): String? {
     // Создайте имя файла (или сохраните существующее имя)
-    val fileName = "image_${System.currentTimeMillis()}.jpg"
+    val fileName = "t_${System.currentTimeMillis()}.jpg"
 
     // Откройте поток вывода для нового файла во внутреннем хранилище приложения
     val fileOutputStream: FileOutputStream

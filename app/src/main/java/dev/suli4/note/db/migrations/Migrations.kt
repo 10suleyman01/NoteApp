@@ -17,3 +17,9 @@ val Migration3_4AddingIsFavorite = object : Migration(3, 4) {
         database.execSQL("ALTER TABLE notes ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0")
     }
 }
+
+val Migration4_5AddingImagePath = object : Migration(4, 5) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE notes ADD COLUMN imagePath TEXT DEFAULT ''")
+    }
+}
