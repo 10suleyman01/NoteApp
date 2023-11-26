@@ -24,6 +24,7 @@ class CreateNoteViewModel : ViewModel() {
 
     fun reset() {
         _favoriteState.value = false
+        setImagePath("")
     }
 
     private var _imagePathState: MutableStateFlow<String> = MutableStateFlow("")

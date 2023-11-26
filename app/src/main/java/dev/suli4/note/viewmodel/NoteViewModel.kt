@@ -107,13 +107,13 @@ class NoteViewModel @Inject constructor(
     }
 
     fun insertNote(note: NoteModel) = launch {
-        if (!note.contentIsEmpty()) {
+        if (!note.contentIsEmpty() || note.imagePath?.isNotEmpty() == true) {
             allNotesUseCase.insertNoteUseCase.invoke(note)
         }
     }
 
     fun updateNote(note: NoteModel) = launch {
-        if (!note.contentIsEmpty()) {
+        if (!note.contentIsEmpty() || note.imagePath?.isNotEmpty() == true) {
             allNotesUseCase.editNoteUseCase.invoke(note)
         }
     }

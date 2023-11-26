@@ -95,6 +95,8 @@
 
     <ImageView
         android:id="@+id/imageView"
+        android:visibility="gone"
+        tools:visibility="visible"
         android:layout_width="40dp"
         android:layout_height="40dp"
         app:layout_constraintStart_toStartOf="parent"

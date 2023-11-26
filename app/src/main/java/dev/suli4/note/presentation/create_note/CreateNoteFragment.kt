@@ -62,6 +62,7 @@ class CreateNoteFragment : Fragment() {
             if (uri != null) {
                 val saved = requireContext().saveImageToInternalStorage(uri)
                 saved?.let {
+                    binding.imageView.isVisible = true
                     createViewModel.setImagePath(saved)
                     loadImage(saved)
                 }
@@ -122,8 +123,9 @@ class CreateNoteFragment : Fragment() {
                 etNoteText.setText(model.text)
 
                 if (model.imagePath!!.isNotEmpty()) {
-                    toast(model.imagePath!!)
                     loadImage(model.imagePath ?: "")
+                    binding.imageView.isVisible = true
+                    createViewModel.setImagePath(model.imagePath?: "")
                 }
 
                 if (model.lastEdited > 0) {
